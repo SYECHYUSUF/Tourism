@@ -80,7 +80,11 @@ export function matchScore(place: Place, prefs: Prefs): number {
 	return Math.round((c * wc + b * wb + l * wl + r * wr) * 100);
 }
 
-/** Format price range for display. */
-export const money = (n: number): string => (n === 0 ? 'Free' : `$${n}`);
-export const priceRange = (p: Pick<Place, 'priceMin' | 'priceMax'>): string =>
-	`${money(p.priceMin)} – $${p.priceMax}`;
+/** Format price into Rupiah (Rp). */
+export const money = (n: number, isEn = false): string => {
+	if (n === 0) return isEn ? 'Free' : 'Gratis';
+	return `Rp ${n.toLocaleString('id-ID')}`;
+};
+
+export const priceRange = (p: Pick<Place, 'priceMin' | 'priceMax'>, isEn = false): string =>
+	`${money(p.priceMin, isEn)} – ${money(p.priceMax, isEn)}`;

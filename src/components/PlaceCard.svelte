@@ -2,6 +2,7 @@
 	import { Star } from 'lucide-svelte';
 	import type { Place } from '$lib/types';
 	import { priceRange } from '$lib/scoring';
+	import { t, locale } from '$lib/i18n';
 
 	export let place: Place;
 	export let score: number | undefined = undefined;
@@ -24,7 +25,7 @@
 		{#if score !== undefined}
 			<div class="absolute left-0 top-0 bg-forest px-3 py-2 text-white">
 				<span class="font-display text-3xl font-extrabold leading-none">{score}</span>
-				<span class="mono ml-1 text-emerald-300">% match</span>
+				<span class="mono ml-1 text-emerald-300">{$t.common.match}</span>
 			</div>
 		{/if}
 
@@ -45,7 +46,7 @@
 	</div>
 
 	<div class="mono mt-2 flex justify-between border-t border-line pt-2 text-slate-soft">
-		<span>{distance} km</span>
-		<span class="text-ink">{priceRange(place)}</span>
+		<span>{distance} {$t.common.km}</span>
+		<span class="text-ink">{priceRange(place, $locale === 'en')}</span>
 	</div>
 </a>

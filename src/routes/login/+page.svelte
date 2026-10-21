@@ -3,6 +3,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Compass } from 'lucide-svelte';
+	import LangSwitcher from '$components/LangSwitcher.svelte';
+	import { t } from '$lib/i18n';
 
 	let mode: 'in' | 'up' = 'in';
 	let name = '';
@@ -107,7 +109,7 @@
 </script>
 
 <svelte:head>
-	<title>{mode === 'in' ? 'Sign In' : 'Join'} — Jelajah</title>
+	<title>{mode === 'in' ? $t.login.signIn : $t.login.join} — Jelajah</title>
 </svelte:head>
 
 <div class="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
@@ -122,34 +124,37 @@
 		<p
 			class="absolute bottom-12 left-12 max-w-md font-display text-4xl font-extrabold leading-tight text-white"
 		>
-			Good trips start with a better shortlist.
+			{$t.login.heroQuote}
 		</p>
 	</div>
 
 	<!-- Right auth form -->
 	<div class="flex flex-col justify-center px-6 py-12 sm:px-16">
-		<a href="/" class="mb-14 flex items-center gap-2 font-display text-xl font-extrabold">
-			<Compass size={20} class="text-brand" />Jelajah
-		</a>
+		<div class="mb-14 flex items-center justify-between">
+			<a href="/" class="flex items-center gap-2 font-display text-xl font-extrabold">
+				<Compass size={20} class="text-brand" />Jelajah
+			</a>
+			<LangSwitcher />
+		</div>
 
-		<p class="mono text-brand">{mode === 'in' ? 'Welcome back' : 'Create account'}</p>
-		<h1 class="mt-2 text-4xl font-extrabold">{mode === 'in' ? 'Sign in' : 'Join Jelajah'}</h1>
+		<p class="mono text-brand">{mode === 'in' ? $t.login.welcomeBack : $t.login.createAccount}</p>
+		<h1 class="mt-2 text-4xl font-extrabold">{mode === 'in' ? $t.login.signIn : $t.login.join}</h1>
 
 		<form on:submit|preventDefault={handleSubmit} class="mt-8 max-w-md space-y-5">
 			{#if mode === 'up'}
 				<label class="block">
-					<span class="mono text-slate-soft">Full name</span>
+					<span class="mono text-slate-soft">{$t.login.fullName}</span>
 					<input required bind:value={name} class={inputClass} />
 				</label>
 			{/if}
 
 			<label class="block">
-				<span class="mono text-slate-soft">Email</span>
+				<span class="mono text-slate-soft">{$t.login.email}</span>
 				<input required type="email" bind:value={email} class={inputClass} />
 			</label>
 
 			<label class="block">
-				<span class="mono text-slate-soft">Password</span>
+				<span class="mono text-slate-soft">{$t.login.password}</span>
 				<input
 					required
 					type="password"
@@ -170,7 +175,7 @@
 				disabled={loading}
 				class="w-full bg-ink py-4 font-bold text-white transition hover:bg-brand disabled:opacity-50"
 			>
-				{loading ? 'Processing...' : mode === 'in' ? 'Sign in' : 'Create account'}
+				{loading ? $t.common.loading : mode === 'in' ? $t.login.signInBtn : $t.login.registerBtn}
 			</button>
 		</form>
 
@@ -182,15 +187,15 @@
 			}}
 			class="mt-5 max-w-md text-left text-sm text-slate-soft"
 		>
-			{mode === 'in' ? 'New here? ' : 'Already have an account? '}
+			{mode === 'in' ? $t.login.newHere + ' ' : $t.login.alreadyHave + ' '}
 			<span class="font-bold text-ocean underline">
-				{mode === 'in' ? 'Create an account' : 'Sign in'}
+				{mode === 'in' ? $t.login.createAccountLink : $t.login.signInLink}
 			</span>
 		</button>
 
 		<!-- Demo accounts widget -->
 		<div class="mt-10 max-w-md border border-dashed border-line p-4">
-			<p class="mono text-slate-soft">Demo accounts</p>
+			<p class="mono text-slate-soft">{$t.login.demoTitle}</p>
 			<div class="mt-3 grid grid-cols-2 gap-2">
 				<button
 					type="button"

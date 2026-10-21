@@ -7,8 +7,8 @@ import type { Prefs } from './types';
 
 export const DEFAULT_PREFS: Prefs = {
 	categories: ['Culinary', 'Beach'],
-	min: 5,
-	max: 60,
+	min: 25000,
+	max: 500000,
 	radius: 20,
 	priority: 'balanced',
 	origin: 'Seminyak'

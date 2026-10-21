@@ -7,6 +7,7 @@
 	import { getReviews, saveReviews } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { priceRange, matchScore, distanceKm, originCoords } from '$lib/scoring';
+	import { t, locale } from '$lib/i18n';
 	import type { PageData } from './$types';
 	import type { Review, Prefs } from '$lib/types';
 
@@ -104,7 +105,7 @@
 		href="/results"
 		class="mono inline-flex items-center gap-2 text-slate-soft hover:text-brand"
 	>
-		<ArrowLeft size={14} />Back to results
+		<ArrowLeft size={14} />{$t.detail.back}
 	</a>
 
 	<!-- Gallery -->
@@ -134,7 +135,7 @@
 				<span class="mono bg-brand-soft px-3 py-1 text-emerald-deep">{place.category}</span>
 				{#if prefs}
 					<span class="mono bg-forest px-3 py-1 text-white"
-						>{matchScore(place, prefs)}% match</span
+						>{matchScore(place, prefs)}{$t.common.match}</span
 					>
 				{/if}
 			</div>
@@ -152,7 +153,7 @@
 			<div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-soft">
 				<span class="flex items-center gap-2">
 					<Stars value={avg} />
-					<b class="text-ink">{avg.toFixed(1)}</b> ({mine.length} reviews)
+					<b class="text-ink">{avg.toFixed(1)}</b> ({mine.length} {$t.detail.reviewsCount})
 				</span>
 				<span class="flex items-center gap-1">
 					<MapPin size={14} />{place.address}
@@ -162,17 +163,17 @@
 			<p class="mt-6 max-w-2xl text-lg leading-relaxed text-slate-soft">{place.blurb}</p>
 
 			<div class="mt-5 flex flex-wrap gap-2">
-				{#each place.tags as t}
-					<span class="border border-line bg-white px-3 py-1 text-sm">{t}</span>
+				{#each place.tags as tItem}
+					<span class="border border-line bg-white px-3 py-1 text-sm">{tItem}</span>
 				{/each}
 			</div>
 
 			<!-- Location Map Section -->
 			<section class="mt-14">
 				<div class="flex items-end justify-between">
-					<h2 class="text-2xl font-extrabold">Location</h2>
+					<h2 class="text-2xl font-extrabold">{$t.detail.location}</h2>
 					<span class="mono text-slate-soft">
-						{distanceKm(place, origin)} km from {prefs?.coords ? 'you' : prefs?.origin ?? 'Seminyak'}
+						{distanceKm(place, origin)} {$t.detail.distanceFrom} {prefs?.coords ? $t.find.you : prefs?.origin ?? 'Seminyak'}
 					</span>
 				</div>
 				<div class="mt-4">
@@ -182,7 +183,7 @@
 
 			<!-- Reviews Section -->
 			<section class="mt-14">
-				<h2 class="text-2xl font-extrabold">Reviews</h2>
+				<h2 class="text-2xl font-extrabold">{$t.detail.reviews}</h2>
 
 				{#if currentUser}
 					<form
@@ -190,7 +191,7 @@
 						class="mt-4 space-y-4 border border-line bg-white p-5"
 					>
 						<div class="flex items-center justify-between">
-							<span class="text-sm font-semibold">Reviewing as {currentUser.name}</span>
+							<span class="text-sm font-semibold">{$t.detail.reviewingAs} {currentUser.name}</span>
 							<div class="flex gap-1" role="radiogroup" aria-label="Rating">
 								{#each [1, 2, 3, 4, 5] as i}
 									<button
@@ -213,7 +214,7 @@
 							required
 							bind:value={form.t}
 							rows="3"
-							placeholder="Share your experience"
+							placeholder={$t.detail.shareExperience}
 							class="w-full border border-line px-4 py-3 outline-none focus:border-brand"
 						/>
 
@@ -222,7 +223,7 @@
 								<label
 									class="mono flex cursor-pointer items-center gap-2 border border-dashed border-slate-300 px-3 py-2 text-slate-soft hover:border-brand hover:text-brand"
 								>
-									<ImagePlus size={14} />Add photo (optional)
+									<ImagePlus size={14} />{$t.detail.addPhoto}
 									<input
 										type="file"
 										accept="image/*"
@@ -252,7 +253,7 @@
 								type="submit"
 								class="bg-brand px-6 py-2.5 font-bold text-white transition hover:bg-emerald-deep"
 							>
-								Post review
+								{$t.detail.postReview}
 							</button>
 						</div>
 					</form>
@@ -260,12 +261,12 @@
 					<div
 						class="mt-4 flex flex-wrap items-center justify-between gap-3 border border-dashed border-line bg-white p-5"
 					>
-						<p class="text-slate-soft">Sign in to rate this place and share photos.</p>
+						<p class="text-slate-soft">{$t.detail.signInPrompt}</p>
 						<a
 							href="/login"
 							class="bg-ink px-5 py-2.5 text-sm font-bold text-white hover:bg-brand"
 						>
-							Sign in to review
+							{$t.detail.signInBtn}
 						</a>
 					</div>
 				{/if}
@@ -296,7 +297,7 @@
 						</li>
 					{/each}
 					{#if mine.length === 0}
-						<li class="py-8 text-slate-soft">No reviews yet. Be the first.</li>
+						<li class="py-8 text-slate-soft">{$t.detail.noReviews}</li>
 					{/if}
 				</ul>
 			</section>
@@ -309,8 +310,8 @@
 					<Wallet size={20} />
 				</span>
 				<div>
-					<p class="mono text-slate-soft">Average price</p>
-					<p class="font-display text-2xl font-extrabold">{priceRange(place)}</p>
+					<p class="mono text-slate-soft">{$t.detail.avgPrice}</p>
+					<p class="font-display text-2xl font-extrabold">{priceRange(place, $locale === 'en')}</p>
 				</div>
 			</div>
 
@@ -319,7 +320,7 @@
 					<Clock size={20} />
 				</span>
 				<div>
-					<p class="mono text-slate-soft">Operating hours</p>
+					<p class="mono text-slate-soft">{$t.detail.hours}</p>
 					<p class="font-bold">{place.hours}</p>
 				</div>
 			</div>
@@ -329,7 +330,7 @@
 					<MapPin size={20} />
 				</span>
 				<div>
-					<p class="mono text-slate-soft">Address</p>
+					<p class="mono text-slate-soft">{$t.detail.address}</p>
 					<p class="font-bold">{place.address}</p>
 				</div>
 			</div>
@@ -351,7 +352,7 @@
 				rel="noreferrer"
 				class="flex w-full items-center justify-center gap-2 bg-ink py-3 font-bold text-white transition hover:bg-brand"
 			>
-				<Navigation size={16} />Get directions
+				<Navigation size={16} />{$t.detail.directions}
 			</a>
 		</aside>
 	</div>

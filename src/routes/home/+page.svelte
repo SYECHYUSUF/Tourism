@@ -6,6 +6,7 @@
 	import { getPlaces, getCategories } from '$lib/data';
 	import { loadPrefs, savePrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
+	import { t } from '$lib/i18n';
 	import type { Place, Prefs } from '$lib/types';
 
 	const hero =
@@ -17,13 +18,14 @@
 	let categories: string[] = [];
 
 	let cat = 'Culinary';
-	let budget = 50;
+	let budget = 350000;
 	let radius = 20;
 
 	onMount(async () => {
 		prefs = loadPrefs();
 		places = getPlaces();
 		categories = getCategories();
+		budget = prefs?.max ?? 350000;
 
 		// Check session
 		const { supabase } = await import('$lib/supabaseClient');
@@ -70,7 +72,7 @@
 </script>
 
 <svelte:head>
-	<title>Home — Jelajah</title>
+	<title>{$t.home.topMatches} — Jelajah</title>
 </svelte:head>
 
 <main>
@@ -86,13 +88,13 @@
 		<div class="absolute inset-0 bg-gradient-to-t from-forest via-forest/40 to-forest/30" />
 		<div class="relative mx-auto w-full max-w-[1400px] px-5 pb-8 lg:px-10">
 			<p class="mono rise text-emerald-300" style="animation-delay: .1s">
-				Welcome back, {first}
+				{$t.home.welcomeBack}, {first}
 			</p>
 			<h1
 				class="rise mt-5 max-w-5xl font-display text-[clamp(3rem,9vw,8.5rem)] font-extrabold leading-[0.92]"
 				style="animation-delay: .2s"
 			>
-				Hi {first},<br />where to <span class="text-emerald-300">next?</span>
+				{$t.home.hi} {first},<br />{$t.home.whereToNext}
 			</h1>
 
 			<!-- Quick Preference Form -->
@@ -101,7 +103,7 @@
 				style="animation-delay: .4s"
 			>
 				<label class="border-b border-line p-4 lg:border-b-0 lg:border-r">
-					<span class="mono text-slate-soft">Category</span>
+					<span class="mono text-slate-soft">{$t.home.category}</span>
 					<select bind:value={cat} class={field}>
 						{#each categories as c}
 							<option>{c}</option>
@@ -110,20 +112,20 @@
 				</label>
 				<label class="border-b border-line p-4 lg:border-b-0 lg:border-r">
 					<span class="mono flex justify-between text-slate-soft">
-						<span>Max budget</span><span>${budget}</span>
+						<span>{$t.home.maxBudget}</span><span>Rp {budget.toLocaleString('id-ID')}</span>
 					</span>
 					<input
 						type="range"
-						min="5"
-						max="300"
-						step="5"
+						min="25000"
+						max="2000000"
+						step="25000"
 						bind:value={budget}
 						class="mt-2 w-full"
 					/>
 				</label>
 				<label class="border-b border-line p-4 lg:border-b-0 lg:border-r">
 					<span class="mono flex justify-between text-slate-soft">
-						<span>Distance</span><span>{radius} km</span>
+						<span>{$t.home.distance}</span><span>{radius} km</span>
 					</span>
 					<input type="range" min="1" max="50" bind:value={radius} class="mt-2 w-full" />
 				</label>
@@ -132,15 +134,15 @@
 					on:click={go}
 					class="group flex items-center justify-center gap-3 bg-brand px-10 py-5 font-bold text-white transition hover:bg-emerald-deep"
 				>
-					Find matches
+					{$t.home.findBtn}
 					<ArrowRight size={18} class="transition group-hover:translate-x-1" />
 				</button>
 			</div>
 
 			<div class="mono mt-6 flex items-center justify-between text-white/60">
-				<span>2,400 places · 38k reviews</span>
+				<span>2.400+ tempat · 38rb ulasan</span>
 				<a href="/find" class="flex items-center gap-2 hover:text-white">
-					Full preference form <ArrowDown size={12} />
+					{$t.home.fullForm} <ArrowDown size={12} />
 				</a>
 			</div>
 		</div>
@@ -152,14 +154,14 @@
 			<div
 				class="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-4 px-5 py-5 lg:px-10"
 			>
-				<p class="mono text-slate-soft">Your preferences</p>
+				<p class="mono text-slate-soft">{$t.home.yourPrefs}</p>
 				<div class="flex flex-wrap gap-x-8 gap-y-2 text-sm font-semibold">
-					<span>{prefs.categories.join(', ') || 'Any category'}</span>
-					<span>${prefs.min}–${prefs.max}</span>
+					<span>{prefs.categories.join(', ') || $t.common.any}</span>
+					<span>Rp {prefs.min.toLocaleString('id-ID')}–Rp {prefs.max.toLocaleString('id-ID')}</span>
 					<span>within {prefs.radius} km</span>
-					<span class="capitalize">{prefs.priority} weights</span>
+					<span class="capitalize">{$t.find.priorities[prefs.priority]?.t || prefs.priority}</span>
 				</div>
-				<a href="/find" class="mono border-b border-brand pb-0.5 text-brand">Edit →</a>
+				<a href="/find" class="mono border-b border-brand pb-0.5 text-brand">{$t.home.edit}</a>
 			</div>
 		</section>
 	{/if}
@@ -168,10 +170,10 @@
 	<section class="mx-auto max-w-[1400px] px-5 pt-24 lg:px-10">
 		<div class="flex items-end justify-between border-b border-ink pb-4">
 			<div>
-				<p class="mono text-brand">Picked for you</p>
-				<h2 class="mt-2 text-4xl font-extrabold sm:text-5xl">Your top matches</h2>
+				<p class="mono text-brand">{$t.home.pickedForYou}</p>
+				<h2 class="mt-2 text-4xl font-extrabold sm:text-5xl">{$t.home.topMatches}</h2>
 			</div>
-			<a href="/results" class="mono hover:text-brand">View all →</a>
+			<a href="/results" class="mono hover:text-brand">{$t.home.viewAll}</a>
 		</div>
 		<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
 			{#each topMatches as { p, s, d }, i (p.id)}
@@ -197,7 +199,7 @@
 					/>
 					<div class="absolute inset-0 bg-gradient-to-t from-forest/80 to-transparent" />
 					<div class="absolute bottom-6 left-6 text-white">
-						<p class="mono text-emerald-300">Browse</p>
+						<p class="mono text-emerald-300">{$t.home.browse}</p>
 						<p class="font-display text-4xl font-extrabold">{c}</p>
 					</div>
 				</a>

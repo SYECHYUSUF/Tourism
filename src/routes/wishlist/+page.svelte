@@ -4,6 +4,7 @@
 	import { getPlaces, getWishlist } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
+	import { t } from '$lib/i18n';
 	import type { Place, Prefs } from '$lib/types';
 
 	let allPlaces: Place[] = [];
@@ -38,17 +39,17 @@
 </script>
 
 <svelte:head>
-	<title>Wishlist — Jelajah</title>
+	<title>{$t.wishlist.title} — Jelajah</title>
 </svelte:head>
 
 <main class="mx-auto max-w-[1400px] px-5 py-12 lg:px-10">
-	<p class="mono text-brand">Saved places</p>
-	<h1 class="mt-1 text-4xl font-extrabold">Your wishlist</h1>
+	<p class="mono text-brand">{$t.wishlist.badge}</p>
+	<h1 class="mt-1 text-4xl font-extrabold">{$t.wishlist.title}</h1>
 
 	{#if list.length === 0}
 		<div class="mt-10 border border-dashed border-line p-16 text-center text-slate-soft">
-			Nothing saved yet. Tap the heart on any place.
-			<a href="/results" class="font-bold text-ocean underline">Explore places</a>
+			{$t.wishlist.empty}
+			<a href="/results" class="font-bold text-ocean underline">{$t.wishlist.exploreLink}</a>
 		</div>
 	{:else}
 		<div class="mt-10 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">

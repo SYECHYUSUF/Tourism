@@ -17,6 +17,7 @@
 	import { loadPrefs, savePrefs } from '$lib/prefs';
 	import { getCategories } from '$lib/data';
 	import { ORIGINS } from '$lib/scoring';
+	import { t } from '$lib/i18n';
 	import type { Prefs } from '$lib/types';
 
 	const icons: Record<string, any> = {
@@ -28,26 +29,26 @@
 		Resort: Hotel
 	};
 
-	const steps = ['Category', 'Budget', 'Distance'];
-	const priorities: { v: Prefs['priority']; t: string; d: string }[] = [
-		{ v: 'balanced', t: 'Balanced', d: '30 / 25 / 25 / 20' },
-		{ v: 'category', t: 'Category first', d: '50 / 20 / 15 / 15' },
-		{ v: 'budget', t: 'Budget first', d: '20 / 45 / 20 / 15' },
-		{ v: 'distance', t: 'Nearest first', d: '20 / 20 / 45 / 15' },
-		{ v: 'rating', t: 'Top rated', d: '20 / 20 / 20 / 40' }
-	];
-
 	let step = 0;
 	let p: Prefs = {
 		categories: ['Culinary', 'Beach'],
-		min: 5,
-		max: 60,
+		min: 25000,
+		max: 500000,
 		radius: 20,
 		priority: 'balanced',
 		origin: 'Seminyak'
 	};
 	let categoriesList: string[] = ['Culinary', 'Cafe', 'Nature', 'Culture', 'Beach', 'Resort'];
 	let geoErr = '';
+
+	$: steps = [$t.find.stepCategory, $t.find.stepBudget, $t.find.stepDistance];
+	$: priorityOptions = [
+		{ v: 'balanced' as const, ...$t.find.priorities.balanced },
+		{ v: 'category' as const, ...$t.find.priorities.category },
+		{ v: 'budget' as const, ...$t.find.priorities.budget },
+		{ v: 'distance' as const, ...$t.find.priorities.distance },
+		{ v: 'rating' as const, ...$t.find.priorities.rating }
+	];
 
 	onMount(() => {
 		p = loadPrefs();
@@ -72,7 +73,7 @@
 					};
 				},
 				() => {
-					geoErr = 'Location blocked. Choose an area instead.';
+					geoErr = $t.find.locationBlocked;
 				}
 			);
 		}
@@ -85,7 +86,7 @@
 </script>
 
 <svelte:head>
-	<title>Preferences — Jelajah</title>
+	<title>{$t.find.stepCategory} — Jelajah</title>
 </svelte:head>
 
 <main class="mx-auto grid max-w-6xl gap-10 px-5 py-12 lg:grid-cols-[1fr_320px]">
@@ -115,8 +116,8 @@
 			<!-- Step 0: Category -->
 			{#if step === 0}
 				<section>
-					<h1 class="text-3xl font-extrabold tracking-tight">What are you in the mood for?</h1>
-					<p class="mt-2 text-slate-soft">Select one or more categories.</p>
+					<h1 class="text-3xl font-extrabold tracking-tight">{$t.find.catTitle}</h1>
+					<p class="mt-2 text-slate-soft">{$t.find.catDesc}</p>
 					<div class="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
 						{#each categoriesList as c}
 							{@const Icon = icons[c] ?? Tag}
@@ -151,20 +152,21 @@
 			<!-- Step 1: Budget -->
 			{#if step === 1}
 				<section>
-					<h1 class="text-3xl font-extrabold tracking-tight">What is your budget?</h1>
-					<p class="mt-2 text-slate-soft">Typical spend per person, in USD.</p>
+					<h1 class="text-3xl font-extrabold tracking-tight">{$t.find.budgetTitle}</h1>
+					<p class="mt-2 text-slate-soft">{$t.find.budgetDesc}</p>
 					<div class="mt-8 grid grid-cols-2 gap-4">
 						<label class="block">
 							<span class="text-xs font-bold uppercase tracking-wider text-slate-soft"
-								>Minimum</span
+								>{$t.find.minBudget}</span
 							>
 							<div
 								class="mt-2 flex items-center rounded-sm border border-line px-4 focus-within:border-brand"
 							>
-								<span class="text-slate-400">$</span>
+								<span class="font-bold text-slate-400">Rp</span>
 								<input
 									type="number"
 									min="0"
+									step="10000"
 									bind:value={p.min}
 									class="w-full bg-transparent px-2 py-3 text-lg font-bold outline-none"
 								/>
@@ -172,15 +174,16 @@
 						</label>
 						<label class="block">
 							<span class="text-xs font-bold uppercase tracking-wider text-slate-soft"
-								>Maximum</span
+								>{$t.find.maxBudget}</span
 							>
 							<div
 								class="mt-2 flex items-center rounded-sm border border-line px-4 focus-within:border-brand"
 							>
-								<span class="text-slate-400">$</span>
+								<span class="font-bold text-slate-400">Rp</span>
 								<input
 									type="number"
 									min="0"
+									step="10000"
 									bind:value={p.max}
 									class="w-full bg-transparent px-2 py-3 text-lg font-bold outline-none"
 								/>
@@ -191,27 +194,29 @@
 						<input
 							type="range"
 							min="0"
-							max="300"
+							max="2500000"
+							step="25000"
 							bind:value={p.min}
 							on:input={() => {
 								if (p.min > p.max) p.max = p.min;
 							}}
 							class="w-full"
-							aria-label="Minimum budget"
+							aria-label={$t.find.minBudget}
 						/>
 						<input
 							type="range"
 							min="0"
-							max="300"
+							max="2500000"
+							step="25000"
 							bind:value={p.max}
 							on:input={() => {
 								if (p.max < p.min) p.min = p.max;
 							}}
 							class="w-full"
-							aria-label="Maximum budget"
+							aria-label={$t.find.maxBudget}
 						/>
 						<div class="flex justify-between text-xs text-slate-400">
-							<span>$0</span><span>$150</span><span>$300+</span>
+							<span>Rp 0</span><span>Rp 1.000.000</span><span>Rp 2.500.000+</span>
 						</div>
 					</div>
 				</section>
@@ -220,8 +225,8 @@
 			<!-- Step 2: Distance & Weights -->
 			{#if step === 2}
 				<section>
-					<h1 class="text-3xl font-extrabold tracking-tight">How far will you go?</h1>
-					<p class="mt-2 text-slate-soft">Pick your starting point and a radius.</p>
+					<h1 class="text-3xl font-extrabold tracking-tight">{$t.find.distanceTitle}</h1>
+					<p class="mt-2 text-slate-soft">{$t.find.distanceDesc}</p>
 					<div class="mt-6 flex flex-wrap gap-2">
 						{#each Object.keys(ORIGINS) as o}
 							<button
@@ -247,7 +252,7 @@
 								? 'border-ocean bg-ocean text-white'
 								: 'border-line hover:border-slate-400'}"
 						>
-							<LocateFixed size={14} />Use my location
+							<LocateFixed size={14} />{$t.find.useLocation}
 						</button>
 					</div>
 					{#if geoErr}
@@ -264,14 +269,14 @@
 						max="50"
 						bind:value={p.radius}
 						class="mt-4 w-full"
-						aria-label="Radius"
+						aria-label={$t.find.radiusLabel}
 					/>
 
 					<h2 class="mono mt-10 text-slate-soft">
-						What matters most? (category / budget / location / rating)
+						{$t.find.priorityHeading}
 					</h2>
 					<div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
-						{#each priorities as o}
+						{#each priorityOptions as o}
 							<button
 								type="button"
 								on:click={() => (p.priority = o.v)}
@@ -297,7 +302,7 @@
 				disabled={step === 0}
 				class="inline-flex items-center gap-2 rounded-sm px-5 py-3 font-semibold text-slate-soft transition hover:bg-slate-100 disabled:opacity-30"
 			>
-				<ArrowLeft size={16} />Back
+				<ArrowLeft size={16} />{$t.find.btnBack}
 			</button>
 			{#if step < 2}
 				<button
@@ -305,7 +310,7 @@
 					on:click={() => (step = step + 1)}
 					class="inline-flex items-center gap-2 rounded-sm bg-ink px-7 py-3 font-bold text-white transition hover:bg-brand"
 				>
-					Continue <ArrowRight size={16} />
+					{$t.find.btnContinue} <ArrowRight size={16} />
 				</button>
 			{:else}
 				<button
@@ -313,7 +318,7 @@
 					on:click={submit}
 					class="inline-flex items-center gap-2 rounded-sm bg-brand px-7 py-3 font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-deep"
 				>
-					Show my matches <ArrowRight size={16} />
+					{$t.find.btnSubmit} <ArrowRight size={16} />
 				</button>
 			{/if}
 		</div>
@@ -321,25 +326,25 @@
 
 	<!-- Sidebar Summary -->
 	<aside class="h-fit rounded-md bg-ink p-7 text-white lg:sticky lg:top-24">
-		<h2 class="text-xs font-bold uppercase tracking-wider text-emerald-300">Your profile</h2>
+		<h2 class="text-xs font-bold uppercase tracking-wider text-emerald-300">{$t.find.profileTitle}</h2>
 		<dl class="mt-5 space-y-5 text-sm">
 			<div>
-				<dt class="text-slate-400">Categories</dt>
-				<dd class="mt-1 font-semibold">{p.categories.join(', ') || 'Any'}</dd>
+				<dt class="text-slate-400">{$t.find.categoriesLabel}</dt>
+				<dd class="mt-1 font-semibold">{p.categories.join(', ') || $t.common.any}</dd>
 			</div>
 			<div>
-				<dt class="text-slate-400">Budget</dt>
-				<dd class="mt-1 font-semibold">${p.min} – ${p.max}</dd>
+				<dt class="text-slate-400">{$t.find.budgetLabel}</dt>
+				<dd class="mt-1 font-semibold">Rp {p.min.toLocaleString('id-ID')} – Rp {p.max.toLocaleString('id-ID')}</dd>
 			</div>
 			<div>
-				<dt class="text-slate-400">Radius</dt>
+				<dt class="text-slate-400">{$t.find.radiusSummary}</dt>
 				<dd class="mt-1 font-semibold">
-					{p.radius} km from {p.coords ? 'you' : p.origin}
+					{p.radius} km {$t.find.fromOrigin} {p.coords ? $t.find.you : p.origin}
 				</dd>
 			</div>
 			<div>
-				<dt class="text-slate-400">Weights</dt>
-				<dd class="mt-1 font-semibold capitalize">{p.priority}</dd>
+				<dt class="text-slate-400">{$t.find.weightsLabel}</dt>
+				<dd class="mt-1 font-semibold capitalize">{$t.find.priorities[p.priority]?.t || p.priority}</dd>
 			</div>
 		</dl>
 	</aside>

@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { Compass, LogOut } from 'lucide-svelte';
+	import LangSwitcher from '$components/LangSwitcher.svelte';
+	import { t } from '$lib/i18n';
 
 	export let user: { name: string; role: string } | null = null;
 
@@ -51,61 +53,71 @@
 					href="/home"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'} ${$page.url.pathname === '/home' ? (clear ? '!text-white' : '!text-brand') : ''}`}
 				>
-					Home
+					{$t.nav.home}
 				</a>
 				<a
 					href="/find"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'} ${$page.url.pathname === '/find' ? (clear ? '!text-white' : '!text-brand') : ''}`}
 				>
-					Preferences
+					{$t.nav.preferences}
 				</a>
 				<a
 					href="/results"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'} ${$page.url.pathname === '/results' ? (clear ? '!text-white' : '!text-brand') : ''}`}
 				>
-					Explore
+					{$t.nav.explore}
 				</a>
 				<a
 					href="/wishlist"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'} ${$page.url.pathname === '/wishlist' ? (clear ? '!text-white' : '!text-brand') : ''}`}
 				>
-					Wishlist
+					{$t.nav.wishlist}
 				</a>
+				{#if user.role === 'admin'}
+					<a
+						href="/admin"
+						class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'}`}
+					>
+						{$t.nav.admin}
+					</a>
+				{/if}
 			{:else}
 				<a
 					href="/#how"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'}`}
 				>
-					How it works
+					{$t.nav.howItWorks}
 				</a>
 				<a
 					href="/find"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'}`}
 				>
-					Preferences
+					{$t.nav.preferences}
 				</a>
 				<a
 					href="/results"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'}`}
 				>
-					Explore
+					{$t.nav.explore}
 				</a>
 				<a
 					href="/login"
 					class={`mono transition ${clear ? 'text-white/80 hover:text-white' : 'text-slate-soft hover:text-brand'}`}
 				>
-					Sign in
+					{$t.nav.signIn}
 				</a>
 			{/if}
 		</nav>
 
 		<!-- Right actions -->
 		<div class="flex items-center gap-3">
+			<LangSwitcher {clear} />
+
 			{#if user}
 				<span class="mono hidden sm:inline">{user.name}</span>
 				<button
 					on:click={logout}
-					aria-label="Sign out"
+					aria-label={$t.nav.signOut}
 					class={`grid h-9 w-9 place-items-center border transition ${clear ? 'border-white/40 hover:bg-white hover:text-ink' : 'border-line hover:bg-ink hover:text-white'}`}
 				>
 					<LogOut size={15} />
@@ -115,7 +127,7 @@
 					href="/login?mode=register"
 					class={`mono px-4 py-2.5 transition ${clear ? 'bg-white text-ink hover:bg-brand hover:text-white' : 'bg-ink text-white hover:bg-brand'}`}
 				>
-					Get started
+					{$t.nav.getStarted}
 				</a>
 			{/if}
 		</div>

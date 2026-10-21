@@ -27,17 +27,20 @@
 		saveReviews
 	} from '$lib/data';
 	import { priceRange } from '$lib/scoring';
+	import LangSwitcher from '$components/LangSwitcher.svelte';
+	import { t, locale } from '$lib/i18n';
 	import type { Place, Review } from '$lib/types';
 
-	const tabs = [
-		['Dashboard', LayoutDashboard],
-		['Places', MapPinned],
-		['Categories', Tags],
-		['Reviews', MessageSquare],
-		['Users', Users]
-	] as const;
+	type TabKey = 'dashboard' | 'places' | 'categories' | 'reviews' | 'users';
+	let tab: TabKey = 'dashboard';
 
-	type Tab = (typeof tabs)[number][0];
+	const tabConfig: [TabKey, any][] = [
+		['dashboard', LayoutDashboard],
+		['places', MapPinned],
+		['categories', Tags],
+		['reviews', MessageSquare],
+		['users', Users]
+	];
 
 	interface Acct {
 		name: string;
@@ -51,7 +54,6 @@
 		{ name: 'Rani Putri', email: 'user@jelajah.id', role: 'user', locked: true }
 	];
 
-	let tab: Tab = 'Dashboard';
 	let q = '';
 	let places: Place[] = [];
 	let cats: string[] = [];
@@ -150,10 +152,10 @@
 	})();
 
 	$: stats = [
-		['Places', String(places.length)],
-		['Reviews', String(reviews.length)],
-		['Users', String(allUsers.length)],
-		['Searches logged', report.searches.toLocaleString()]
+		[$t.admin.stats.places, String(places.length)],
+		[$t.admin.stats.reviews, String(reviews.length)],
+		[$t.admin.stats.users, String(allUsers.length)],
+		[$t.admin.stats.searches, report.searches.toLocaleString()]
 	];
 
 	function addPlace() {
@@ -165,8 +167,8 @@
 			address: '',
 			lat: -8.5,
 			lng: 115.2,
-			priceMin: 5,
-			priceMax: 30,
+			priceMin: 25000,
+			priceMax: 100000,
 			rating: 0,
 			reviewCount: 0,
 			image:
@@ -204,17 +206,17 @@
 			Jelajah <span class="mono ml-1 text-emerald-300">Admin</span>
 		</a>
 		<nav class="mt-12 space-y-1">
-			{#each tabs as [l, Icon]}
+			{#each tabConfig as [key, Icon]}
 				<button
 					type="button"
-					on:click={() => (tab = l)}
+					on:click={() => (tab = key)}
 					class="flex w-full items-center gap-3 px-3 py-3 text-sm font-semibold transition {tab ===
-					l
+					key
 						? 'bg-white text-ink'
 						: 'text-white/70 hover:bg-white/10 hover:text-white'}"
 				>
 					<svelte:component this={Icon} size={17} />
-					{l}
+					{$t.admin.tabs[key]}
 				</button>
 			{/each}
 		</nav>
@@ -232,18 +234,19 @@
 				<Search size={16} class="text-slate-400" />
 				<input
 					bind:value={q}
-					placeholder="Search {tab.toLowerCase()}"
+					placeholder={$t.admin.searchPlaceholder}
 					class="w-full bg-transparent text-sm outline-none"
 				/>
 			</label>
 			<div class="flex items-center gap-4">
+				<LangSwitcher />
 				<span class="mono hidden sm:inline">{user?.name || 'Admin'}</span>
 				<button
 					type="button"
 					on:click={logout}
 					class="flex items-center gap-2 border border-line px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
 				>
-					<LogOut size={14} />Sign out
+					<LogOut size={14} />{$t.nav.signOut}
 				</button>
 			</div>
 		</header>
@@ -252,26 +255,26 @@
 			<!-- Header Title + Mobile Nav -->
 			<div class="flex flex-wrap items-end justify-between gap-3">
 				<div>
-					<p class="mono text-brand">Admin panel</p>
-					<h1 class="text-3xl font-extrabold tracking-tight">{tab}</h1>
+					<p class="mono text-brand">{$t.admin.title}</p>
+					<h1 class="text-3xl font-extrabold tracking-tight">{$t.admin.tabs[tab]}</h1>
 				</div>
 				<div class="flex flex-wrap gap-1 lg:hidden">
-					{#each tabs as [l]}
+					{#each tabConfig as [key]}
 						<button
 							type="button"
-							on:click={() => (tab = l)}
-							class="px-3 py-1.5 text-xs font-semibold {tab === l
+							on:click={() => (tab = key)}
+							class="px-3 py-1.5 text-xs font-semibold {tab === key
 								? 'bg-ink text-white'
 								: 'border border-line bg-white'}"
 						>
-							{l}
+							{$t.admin.tabs[key]}
 						</button>
 					{/each}
 				</div>
 			</div>
 
 			<!-- TAB: DASHBOARD -->
-			{#if tab === 'Dashboard'}
+			{#if tab === 'dashboard'}
 				<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 					{#each stats as [l, v]}
 						<div class="border border-line bg-white p-5">
@@ -284,8 +287,8 @@
 				<div class="grid gap-6 xl:grid-cols-2">
 					<!-- Top Places -->
 					<section class="border border-line bg-white p-6">
-						<h2 class="font-display text-xl font-bold">Most popular places</h2>
-						<p class="mono mb-5 mt-1 text-slate-soft">By review volume</p>
+						<h2 class="font-display text-xl font-bold">{$t.admin.topPlaces}</h2>
+						<p class="mono mb-5 mt-1 text-slate-soft">{$t.admin.topPlacesSub}</p>
 						<ul class="space-y-4">
 							{#each report.topPlaces as [l, v]}
 								{@const max = Math.max(1, ...report.topPlaces.map((r) => r[1]))}
@@ -304,8 +307,8 @@
 
 					<!-- Top Categories -->
 					<section class="border border-line bg-white p-6">
-						<h2 class="font-display text-xl font-bold">Most searched categories</h2>
-						<p class="mono mb-5 mt-1 text-slate-soft">From preference searches</p>
+						<h2 class="font-display text-xl font-bold">{$t.admin.topCats}</h2>
+						<p class="mono mb-5 mt-1 text-slate-soft">{$t.admin.topCatsSub}</p>
 						<ul class="space-y-4">
 							{#each report.topCats as [l, v]}
 								{@const max = Math.max(1, ...report.topCats.map((r) => r[1]))}
@@ -325,18 +328,18 @@
 			{/if}
 
 			<!-- TAB: PLACES -->
-			{#if tab === 'Places'}
+			{#if tab === 'places'}
 				<section class="border border-line bg-white">
 					<div class="flex items-center justify-between p-5">
 						<h2 class="font-bold">
-							All places ({places.filter((p) => p.name.toLowerCase().includes(term)).length})
+							{$t.admin.allPlaces} ({places.filter((p) => p.name.toLowerCase().includes(term)).length})
 						</h2>
 						<button
 							type="button"
 							on:click={addPlace}
 							class="inline-flex items-center gap-2 bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-emerald-deep"
 						>
-							<Plus size={16} />Add place
+							<Plus size={16} />{$t.admin.addPlace}
 						</button>
 					</div>
 
@@ -344,7 +347,7 @@
 						<table class="w-full min-w-[760px] text-left text-sm">
 							<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 								<tr>
-									{#each ['Place', 'Category', 'Price', 'Rating', ''] as h}
+									{#each [$t.admin.table.place, $t.admin.table.category, $t.admin.table.price, $t.admin.table.rating, ''] as h}
 										<th class={th}>{h}</th>
 									{/each}
 								</tr>
@@ -366,13 +369,13 @@
 											</div>
 										</td>
 										<td class="px-5 py-3">{r.category}</td>
-										<td class="px-5 py-3">{priceRange(r)}</td>
+										<td class="px-5 py-3">{priceRange(r, $locale === 'en')}</td>
 										<td class="px-5 py-3 font-semibold">{r.rating || '–'}</td>
 										<td class="px-5 py-3">
 											<div class="flex justify-end gap-1">
 												<button
 													type="button"
-													aria-label="Edit"
+													aria-label={$t.admin.editPlace}
 													on:click={() => (editing = { ...r })}
 													class="p-2 text-slate-soft hover:bg-ocean-soft hover:text-ocean"
 												>
@@ -382,7 +385,7 @@
 													type="button"
 													aria-label="Delete"
 													on:click={() =>
-														confirm(`Delete ${r.name}?`) &&
+														confirm(`Hapus ${r.name}?`) &&
 														commitPlaces(places.filter((x) => x.id !== r.id))}
 													class="p-2 text-slate-soft hover:bg-red-50 hover:text-red-600"
 												>
@@ -399,7 +402,7 @@
 			{/if}
 
 			<!-- TAB: CATEGORIES -->
-			{#if tab === 'Categories'}
+			{#if tab === 'categories'}
 				<section class="border border-line bg-white">
 					<form
 						on:submit|preventDefault={() => {
@@ -411,22 +414,22 @@
 					>
 						<input
 							bind:value={newCat}
-							placeholder="New category name"
+							placeholder={$t.admin.newCategoryName}
 							class="{inputCls} max-w-xs"
 						/>
 						<button
 							type="submit"
 							class="inline-flex items-center gap-2 bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-emerald-deep"
 						>
-							<Plus size={16} />Add
+							<Plus size={16} />{$t.admin.addCategoryBtn}
 						</button>
 					</form>
 
 					<table class="w-full text-left text-sm">
 						<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 							<tr>
-								<th class={th}>Category</th>
-								<th class={th}>Places</th>
+								<th class={th}>{$t.admin.table.category}</th>
+								<th class={th}>{$t.admin.stats.places}</th>
 								<th class={th} />
 							</tr>
 						</thead>
@@ -463,7 +466,7 @@
 													}}
 													class="px-3 py-1.5 text-sm font-bold text-emerald-deep hover:bg-brand-soft"
 												>
-													Save
+													{$t.admin.table.save}
 												</button>
 											{:else}
 												<button
@@ -496,19 +499,19 @@
 			{/if}
 
 			<!-- TAB: REVIEWS -->
-			{#if tab === 'Reviews'}
+			{#if tab === 'reviews'}
 				<section class="border border-line bg-white">
 					<div class="p-5">
-						<h2 class="font-bold">Moderate reviews</h2>
+						<h2 class="font-bold">{$t.admin.moderateHeading}</h2>
 						<p class="text-sm text-slate-soft">
-							Hide reviews that break the rules. Hidden reviews disappear from place pages.
+							{$t.admin.moderateSub}
 						</p>
 					</div>
 					<div class="overflow-x-auto">
 						<table class="w-full min-w-[760px] text-left text-sm">
 							<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 								<tr>
-									{#each ['Reviewer', 'Place', 'Rating', 'Review', 'Status', ''] as h}
+									{#each [$t.admin.table.reviewer, $t.admin.table.place, $t.admin.table.rating, $t.admin.table.review, $t.admin.table.status, ''] as h}
 										<th class={th}>{h}</th>
 									{/each}
 								</tr>
@@ -537,7 +540,7 @@
 													? 'bg-slate-200 text-slate-soft'
 													: 'bg-brand-soft text-emerald-deep'}"
 											>
-												{r.hidden ? 'Hidden' : 'Visible'}
+												{r.hidden ? $t.admin.table.hidden : $t.admin.table.visible}
 											</span>
 										</td>
 										<td class="px-5 py-3">
@@ -579,13 +582,13 @@
 			{/if}
 
 			<!-- TAB: USERS -->
-			{#if tab === 'Users'}
+			{#if tab === 'users'}
 				<section class="border border-line bg-white">
 					<div class="overflow-x-auto">
 						<table class="w-full min-w-[640px] text-left text-sm">
 							<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 								<tr>
-									{#each ['Name', 'Email', 'Role', ''] as h}
+									{#each [$t.admin.table.name, $t.admin.table.email, $t.admin.table.role, ''] as h}
 										<th class={th}>{h}</th>
 									{/each}
 								</tr>
@@ -609,7 +612,7 @@
 										<td class="px-5 py-3">
 											<div class="flex justify-end gap-1">
 												{#if u.locked}
-													<span class="mono py-2 text-slate-400">Built-in</span>
+													<span class="mono py-2 text-slate-400">{$t.admin.table.builtIn}</span>
 												{:else}
 													<button
 														type="button"

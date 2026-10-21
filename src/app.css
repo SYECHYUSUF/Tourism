@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    font-family: theme('fontFamily.sans');
+    background-color: theme('colors.canvas');
+    color: theme('colors.ink');
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: theme('fontFamily.display');
+    letter-spacing: -0.025em;
+  }
+  ::selection {
+    background: theme('colors.brand');
+    color: white;
+  }
+  * {
+    scrollbar-width: none;
+  }
+  input[type='range'] {
+    accent-color: theme('colors.brand');
+  }
+  :focus-visible {
+    outline: 2px solid theme('colors.brand');
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .mono {
+    font-family: theme('fontFamily.mono');
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .rise {
+    animation: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

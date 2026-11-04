@@ -35,7 +35,7 @@
 	});
 
 	$: list = allPlaces.filter((p) => savedIds.includes(p.id));
-	$: origin = prefs ? originCoords(prefs) : [-8.6913, 115.1682];
+	$: origin = prefs ? originCoords(prefs) : ([-8.6913, 115.1682] as [number, number]);
 </script>
 
 <svelte:head>

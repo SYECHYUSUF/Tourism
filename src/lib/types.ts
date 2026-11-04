@@ -28,9 +28,15 @@ export interface Place {
 	rating: number;
 	reviewCount: number;
 	image: string;
+	gallery?: string[];
 	blurb: string;
 	hours: string;
 	tags: string[];
+	facilities?: string[];
+	phone?: string;
+	instagram?: string;
+	gmapsUrl?: string;
+	highlights?: string[];
 }
 
 export interface Review {

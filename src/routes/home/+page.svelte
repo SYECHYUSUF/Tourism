@@ -6,13 +6,15 @@
 	import { getPlaces, getCategories } from '$lib/data';
 	import { loadPrefs, savePrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
+	import { userStore } from '$lib/userStore';
 	import { t } from '$lib/i18n';
 	import type { Place, Prefs } from '$lib/types';
 
 	const hero =
 		'https://images.unsplash.com/photo-1558005530-a7958896ec60?w=2400&fit=crop&auto=format&q=80';
 
-	let user: any = null;
+	export let data: any = null;
+
 	let prefs: Prefs;
 	let places: Place[] = [];
 	let categories: string[] = [];
@@ -21,32 +23,18 @@
 	let budget = 350000;
 	let radius = 20;
 
+	$: user = $userStore || data?.user;
+
 	onMount(async () => {
+		userStore.init(data?.user);
 		prefs = loadPrefs();
 		places = getPlaces();
 		categories = getCategories();
 		budget = prefs?.max ?? 350000;
-
-		// Check session
-		const { supabase } = await import('$lib/supabaseClient');
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (session?.user) {
-			user = {
-				name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'there',
-				email: session.user.email
-			};
-		} else {
-			try {
-				const sess = JSON.parse(localStorage.getItem('session') || 'null');
-				if (sess) user = sess;
-			} catch {}
-		}
 	});
 
 	$: first = user?.name ? user.name.split(' ')[0] : 'there';
-	$: origin = prefs ? originCoords(prefs) : [-8.6913, 115.1682];
+	$: origin = prefs ? originCoords(prefs) : ([-8.6913, 115.1682] as [number, number]);
 
 	$: topMatches = places
 		.map((p) => ({
@@ -55,7 +43,7 @@
 			d: distanceKm(p, origin)
 		}))
 		.sort((a, b) => b.s - a.s)
-		.slice(0, 4);
+		.slice(0, 8);
 
 	function go() {
 		const np: Prefs = {

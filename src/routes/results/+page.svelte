@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { SlidersHorizontal, Pencil, Search } from 'lucide-svelte';
+	import { SlidersHorizontal, Pencil, Search, LayoutGrid, Map as MapIcon } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
+	import PlacesMap from '$components/PlacesMap.svelte';
 	import { getPlaces, getCategories } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
@@ -27,6 +28,7 @@
 	let minRating = 0;
 	let selectedCats: string[] = [];
 	let openMobileFilters = false;
+	let viewMode: 'grid' | 'map' = 'grid';
 
 	onMount(() => {
 		prefs = loadPrefs();
@@ -88,7 +90,31 @@
 				· {prefs.radius} km {$t.find.fromOrigin} {prefs.coords ? $t.find.you : prefs.origin}
 			</p>
 		</div>
-		<div class="flex gap-2">
+		<div class="flex flex-wrap items-center gap-2">
+			<!-- View Mode Toggle -->
+			<div class="inline-flex rounded-sm border border-line bg-white p-0.5 shadow-sm">
+				<button
+					type="button"
+					on:click={() => (viewMode = 'grid')}
+					class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition {viewMode === 'grid'
+						? 'bg-ink text-white'
+						: 'text-slate-soft hover:text-ink'}"
+					aria-pressed={viewMode === 'grid'}
+				>
+					<LayoutGrid size={14} /> {$locale === 'id' ? 'Daftar' : 'Grid'}
+				</button>
+				<button
+					type="button"
+					on:click={() => (viewMode = 'map')}
+					class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold transition {viewMode === 'map'
+						? 'bg-ink text-white'
+						: 'text-slate-soft hover:text-ink'}"
+					aria-pressed={viewMode === 'map'}
+				>
+					<MapIcon size={14} /> {$locale === 'id' ? 'Peta' : 'Map'} ({list.length})
+				</button>
+			</div>
+
 			<a
 				href="/find"
 				class="inline-flex items-center gap-2 border border-line bg-white px-4 py-2 text-sm font-semibold hover:border-brand"
@@ -301,16 +327,28 @@
 			</div>
 		</aside>
 
-		<!-- Cards Grid -->
-		<div class="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
-			{#each list as { p, s, d } (p.id)}
-				<PlaceCard place={p} score={s} distance={d} />
-			{/each}
-			{#if list.length === 0}
-				<p class="col-span-full border border-dashed border-line p-12 text-center text-slate-soft">
-					{$t.results.emptyState}
-				</p>
-			{/if}
-		</div>
+		<!-- View Mode: Map or Grid -->
+		{#if viewMode === 'map'}
+			<div class="space-y-4">
+				<PlacesMap items={list} {origin} />
+				<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+					{#each list.slice(0, 6) as { p, s, d } (p.id)}
+						<PlaceCard place={p} score={s} distance={d} />
+					{/each}
+				</div>
+			</div>
+		{:else}
+			<!-- Cards Grid -->
+			<div class="grid gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3">
+				{#each list as { p, s, d } (p.id)}
+					<PlaceCard place={p} score={s} distance={d} />
+				{/each}
+				{#if list.length === 0}
+					<p class="col-span-full border border-dashed border-line p-12 text-center text-slate-soft">
+						{$t.results.emptyState}
+					</p>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </main>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Star } from 'lucide-svelte';
+	import WishlistButton from '$components/WishlistButton.svelte';
 	import type { Place } from '$lib/types';
 	import { priceRange } from '$lib/scoring';
 	import { t, locale } from '$lib/i18n';
@@ -9,7 +10,7 @@
 	export let distance: number;
 </script>
 
-<a href="/places/{place.id}" class="group block">
+<a href="/places/{place.id}" class="group relative block">
 	<!-- Image -->
 	<div class="relative aspect-[4/5] overflow-hidden bg-slate-200">
 		<img
@@ -29,8 +30,16 @@
 			</div>
 		{/if}
 
+		<!-- Wishlist quick action button -->
+		<div class="absolute right-2 top-2 z-10">
+			<WishlistButton
+				placeId={place.id}
+				className="rounded-full bg-white/85 p-2 text-ink shadow-sm backdrop-blur transition hover:bg-white hover:scale-110"
+			/>
+		</div>
+
 		<!-- Category / Area label -->
-		<span class="mono absolute bottom-3 left-3 text-white">{place.category} / {place.area}</span>
+		<span class="mono absolute bottom-3 left-3 text-white drop-shadow-sm">{place.category} / {place.area}</span>
 	</div>
 
 	<!-- Card body -->
@@ -40,13 +49,13 @@
 		>
 			{place.name}
 		</h3>
-		<span class="flex items-center gap-1 text-sm font-semibold">
+		<span class="flex shrink-0 items-center gap-1 text-sm font-semibold">
 			<Star size={13} class="fill-ink" />{place.rating}
 		</span>
 	</div>
 
 	<div class="mono mt-2 flex justify-between border-t border-line pt-2 text-slate-soft">
 		<span>{distance} {$t.common.km}</span>
-		<span class="text-ink">{priceRange(place, $locale === 'en')}</span>
+		<span class="text-ink font-medium">{priceRange(place, $locale === 'en')}</span>
 	</div>
 </a>

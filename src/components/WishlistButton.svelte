@@ -10,21 +10,35 @@
 	export let className: string = '';
 
 	let on = false;
+	let activeEmail: string | null = null;
+
+	function resolveEmail(): string | null {
+		if (userEmail) return userEmail;
+		if (typeof localStorage !== 'undefined') {
+			try {
+				const sess = JSON.parse(localStorage.getItem('session') || 'null');
+				if (sess?.email) return sess.email;
+			} catch {}
+		}
+		return null;
+	}
 
 	onMount(() => {
-		if (userEmail) {
-			on = getWishlist(userEmail).includes(placeId);
+		activeEmail = resolveEmail();
+		if (activeEmail) {
+			on = getWishlist(activeEmail).includes(placeId);
 		}
 	});
 
 	function handleClick(e: MouseEvent) {
 		e.preventDefault();
 		e.stopPropagation();
-		if (!userEmail) {
+		activeEmail = resolveEmail();
+		if (!activeEmail) {
 			window.location.href = '/login';
 			return;
 		}
-		on = toggleWishlist(userEmail, placeId);
+		on = toggleWishlist(activeEmail, placeId);
 	}
 </script>
 

@@ -455,6 +455,7 @@
 												<button
 													type="button"
 													on:click={() => {
+														if (!renaming) return;
 														const n = renaming[1].trim();
 														if (n && (n === c || !cats.includes(n))) {
 															commitCats(cats.map((x) => (x === c ? n : x)));

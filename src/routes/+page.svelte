@@ -106,7 +106,7 @@
 						<h3 class="text-xl font-bold">{signalTitle}</h3>
 						<div>
 							<div class="h-px bg-white/20">
-								<div class="h-px bg-emerald-300" style="width:{w * 3}%" />
+								<div class="h-px bg-emerald-300" style="width:{Number(w) * 3}%" />
 							</div>
 							<p class="mt-2 text-sm text-white/60">{desc}</p>
 						</div>

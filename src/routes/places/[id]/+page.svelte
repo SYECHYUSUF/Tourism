@@ -1,6 +1,21 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { ArrowLeft, Clock, MapPin, Wallet, Navigation, Star, ImagePlus, X } from 'lucide-svelte';
+	import {
+		ArrowLeft,
+		Clock,
+		MapPin,
+		Wallet,
+		Navigation,
+		Star,
+		ImagePlus,
+		X,
+		Phone,
+		Instagram,
+		Share2,
+		Check,
+		Sparkles,
+		ShieldCheck
+	} from 'lucide-svelte';
 	import Stars from '$components/Stars.svelte';
 	import MapComponent from '$components/MapComponent.svelte';
 	import WishlistButton from '$components/WishlistButton.svelte';
@@ -22,6 +37,7 @@
 	let prefs: Prefs;
 	let origin: [number, number] = [-8.6913, 115.1682]; // default Seminyak
 	let currentUser: any = null;
+	let copied = false;
 
 	onMount(async () => {
 		prefs = loadPrefs();
@@ -47,13 +63,10 @@
 		}
 	});
 
-	$: gallery = [
-		place.image,
-		...all
-			.filter((p) => p.id !== place.id)
-			.slice(0, 3)
-			.map((p) => p.image)
-	];
+	$: gallery =
+		place.gallery && place.gallery.length > 0
+			? place.gallery
+			: [place.image];
 
 	$: mine = reviews.filter((r) => r.placeId === place.id && !r.hidden);
 	$: avg = mine.length ? mine.reduce((a, r) => a + r.rating, 0) / mine.length : place.rating;
@@ -73,6 +86,24 @@
 			URL.revokeObjectURL(url);
 		};
 		img.src = url;
+	}
+
+	function sharePlace() {
+		if (typeof navigator !== 'undefined' && navigator.share) {
+			navigator
+				.share({
+					title: place.name,
+					text: `Lihat rekomendasi tempat ini di Jelajah: ${place.name} (${place.category} di ${place.area})`,
+					url: window.location.href
+				})
+				.catch(() => {});
+		} else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+			navigator.clipboard.writeText(window.location.href);
+			copied = true;
+			setTimeout(() => {
+				copied = false;
+			}, 2500);
+		}
 	}
 
 	function submitReview() {
@@ -167,6 +198,38 @@
 					<span class="border border-line bg-white px-3 py-1 text-sm">{tItem}</span>
 				{/each}
 			</div>
+
+			<!-- Highlights (Keunggulan / Menu Rekomendasi) -->
+			{#if place.highlights && place.highlights.length > 0}
+				<div class="mt-8 rounded-md border border-line bg-brand-soft/40 p-5">
+					<div class="flex items-center gap-2 font-bold text-emerald-deep">
+						<Sparkles size={18} />
+						<span>{$locale === 'id' ? 'Menu & Daya Tarik Utama' : 'Highlights & Signatures'}</span>
+					</div>
+					<div class="mt-3 flex flex-wrap gap-2">
+						{#each place.highlights as hl}
+							<span class="rounded border border-line bg-white px-3 py-1.5 text-xs font-bold text-ink shadow-sm">
+								★ {hl}
+							</span>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			<!-- Facilities (Fasilitas & Layanan) -->
+			{#if place.facilities && place.facilities.length > 0}
+				<div class="mt-8">
+					<h3 class="text-xl font-bold">{$locale === 'id' ? 'Fasilitas & Fasilitas Pendukung' : 'Amenities & Facilities'}</h3>
+					<div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+						{#each place.facilities as fac}
+							<div class="flex items-center gap-2 rounded border border-line bg-white p-3 text-sm">
+								<Check size={16} class="shrink-0 text-brand" />
+								<span class="font-medium text-slate-700">{fac}</span>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<!-- Location Map Section -->
 			<section class="mt-14">
@@ -346,14 +409,66 @@
 				</tbody>
 			</table>
 
-			<a
-				href="https://www.openstreetmap.org/directions?from={origin[0]},{origin[1]}&to={place.lat},{place.lng}"
-				target="_blank"
-				rel="noreferrer"
-				class="flex w-full items-center justify-center gap-2 bg-ink py-3 font-bold text-white transition hover:bg-brand"
-			>
-				<Navigation size={16} />{$t.detail.directions}
-			</a>
+			<div class="space-y-2 pt-2">
+				{#if place.gmapsUrl}
+					<a
+						href={place.gmapsUrl}
+						target="_blank"
+						rel="noreferrer"
+						class="flex w-full items-center justify-center gap-2 border border-line bg-white py-3 font-bold text-ink transition hover:border-brand hover:text-brand shadow-sm"
+					>
+						<MapPin size={16} class="text-red-500" />
+						{$locale === 'id' ? 'Buka di Google Maps' : 'Open in Google Maps'}
+					</a>
+				{/if}
+
+				<a
+					href="https://www.openstreetmap.org/directions?from={origin[0]},{origin[1]}&to={place.lat},{place.lng}"
+					target="_blank"
+					rel="noreferrer"
+					class="flex w-full items-center justify-center gap-2 bg-ink py-3 font-bold text-white transition hover:bg-brand"
+				>
+					<Navigation size={16} />{$t.detail.directions}
+				</a>
+
+				<button
+					type="button"
+					on:click={sharePlace}
+					class="flex w-full items-center justify-center gap-2 border border-line bg-white py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+				>
+					{#if copied}
+						<Check size={16} class="text-emerald-600" />
+						<span class="text-emerald-600 font-bold">{$locale === 'id' ? 'Tautan Tersalin!' : 'Link Copied!'}</span>
+					{:else}
+						<Share2 size={16} />
+						{$locale === 'id' ? 'Bagikan Tempat Ini' : 'Share Place'}
+					{/if}
+				</button>
+			</div>
+
+			{#if place.phone || place.instagram}
+				<div class="border-t border-line pt-4 text-xs text-slate-soft space-y-2">
+					{#if place.phone}
+						<div class="flex items-center justify-between">
+							<span class="flex items-center gap-1.5"><Phone size={13} /> Kontak</span>
+							<a href="tel:{place.phone}" class="font-bold text-ink hover:text-brand">{place.phone}</a>
+						</div>
+					{/if}
+					{#if place.instagram}
+						<div class="flex items-center justify-between">
+							<span class="flex items-center gap-1.5"><Instagram size={13} /> Instagram</span>
+							<a
+								href="https://instagram.com/{place.instagram.replace('@', '')}"
+								target="_blank"
+								rel="noreferrer"
+								class="font-bold text-ink hover:text-brand"
+							>
+								{place.instagram}
+							</a>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		</aside>
 	</div>
 </main>

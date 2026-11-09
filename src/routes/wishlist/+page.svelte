@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import PlaceCard from '$components/PlaceCard.svelte';
 	import { getPlaces, getWishlist } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
@@ -10,28 +11,17 @@
 	let allPlaces: Place[] = [];
 	let savedIds: string[] = [];
 	let prefs: Prefs;
-	let userEmail: string | null = null;
 
-	onMount(async () => {
+	$: userEmail = $page.data.user?.email || null;
+	$: if (userEmail) {
+		savedIds = getWishlist(userEmail);
+	} else {
+		savedIds = [];
+	}
+
+	onMount(() => {
 		prefs = loadPrefs();
 		allPlaces = getPlaces();
-
-		const { supabase } = await import('$lib/supabaseClient');
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (session?.user?.email) {
-			userEmail = session.user.email;
-		} else {
-			try {
-				const sess = JSON.parse(localStorage.getItem('session') || 'null');
-				if (sess?.email) userEmail = sess.email;
-			} catch {}
-		}
-
-		if (userEmail) {
-			savedIds = getWishlist(userEmail);
-		}
 	});
 
 	$: list = allPlaces.filter((p) => savedIds.includes(p.id));

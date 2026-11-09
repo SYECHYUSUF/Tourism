@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import {
 		MapPinned,
 		Tags,
@@ -59,40 +59,16 @@
 	let cats: string[] = [];
 	let reviews: Review[] = [];
 	let accts: Acct[] = [];
-	let user: any = null;
+	$: user = $page.data.user;
 
 	let editing: Place | null = null;
 	let newCat = '';
 	let renaming: [string, string] | null = null;
 
-	onMount(async () => {
+	onMount(() => {
 		places = getPlaces();
 		cats = getCategories();
 		reviews = getReviews();
-
-		try {
-			accts = JSON.parse(localStorage.getItem('accounts') || '[]');
-		} catch {
-			accts = [];
-		}
-
-		// Auth check
-		const { supabase } = await import('$lib/supabaseClient');
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (session?.user) {
-			user = {
-				name: session.user.user_metadata?.name || session.user.email,
-				email: session.user.email,
-				role: session.user.user_metadata?.role || 'user'
-			};
-		} else {
-			try {
-				const sess = JSON.parse(localStorage.getItem('session') || 'null');
-				if (sess) user = sess;
-			} catch {}
-		}
 	});
 
 	function commitPlaces(v: Place[]) {
@@ -112,14 +88,6 @@
 
 	function commitAccts(v: Acct[]) {
 		accts = v;
-		localStorage.setItem('accounts', JSON.stringify(v));
-	}
-
-	async function logout() {
-		const { supabase } = await import('$lib/supabaseClient');
-		await supabase.auth.signOut();
-		localStorage.removeItem('session');
-		goto('/login');
 	}
 
 	$: term = q.toLowerCase();
@@ -241,13 +209,14 @@
 			<div class="flex items-center gap-4">
 				<LangSwitcher />
 				<span class="mono hidden sm:inline">{user?.name || 'Admin'}</span>
-				<button
-					type="button"
-					on:click={logout}
-					class="flex items-center gap-2 border border-line px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
-				>
-					<LogOut size={14} />{$t.nav.signOut}
-				</button>
+				<form method="POST" action="/logout" class="inline">
+					<button
+						type="submit"
+						class="flex items-center gap-2 border border-line px-3 py-2 text-sm font-semibold hover:bg-ink hover:text-white"
+					>
+						<LogOut size={14} />{$t.nav.signOut}
+					</button>
+				</form>
 			</div>
 		</header>
 

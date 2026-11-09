@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/stores';
 	import {
 		ArrowLeft,
 		Clock,
@@ -36,31 +37,13 @@
 	let form = { r: 5, t: '', photo: '' };
 	let prefs: Prefs;
 	let origin: [number, number] = [-8.6913, 115.1682]; // default Seminyak
-	let currentUser: any = null;
+	$: currentUser = $page.data.user;
 	let copied = false;
 
-	onMount(async () => {
+	onMount(() => {
 		prefs = loadPrefs();
 		origin = originCoords(prefs);
 		reviews = getReviews();
-
-		// Check local storage or session
-		const { supabase } = await import('$lib/supabaseClient');
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
-		if (session?.user) {
-			currentUser = {
-				name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-				email: session.user.email
-			};
-		} else {
-			// check demo session
-			try {
-				const sess = JSON.parse(localStorage.getItem('session') || 'null');
-				if (sess) currentUser = sess;
-			} catch {}
-		}
 	});
 
 	$: gallery =

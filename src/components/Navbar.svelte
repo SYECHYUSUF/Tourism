@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { goto } from "$app/navigation";
   import { Compass, LogOut, Menu, X } from "lucide-svelte";
   import LangSwitcher from "$components/LangSwitcher.svelte";
   import { t } from "$lib/i18n";
@@ -33,15 +32,6 @@
   }
 
   $: clear = isHome && !scrolled && !mobileMenuOpen;
-
-  async function logout() {
-    try {
-      const { supabase } = await import("$lib/supabaseClient");
-      await supabase.auth.signOut();
-    } catch {}
-    mobileMenuOpen = false;
-    goto("/");
-  }
 </script>
 
 <header
@@ -125,13 +115,15 @@
           class="mono text-xs hidden max-w-[130px] truncate sm:inline font-bold"
           >{activeUser.name}</span
         >
-        <button
-          on:click={logout}
-          aria-label={$t.nav.signOut}
-          class={`grid h-9 w-9 place-items-center border transition ${clear ? "border-white/40 hover:bg-white hover:text-ink" : "border-line hover:bg-ink hover:text-white"}`}
-        >
-          <LogOut size={16} />
-        </button>
+        <form method="POST" action="/logout" class="inline">
+          <button
+            type="submit"
+            aria-label={$t.nav.signOut}
+            class={`grid h-9 w-9 place-items-center border transition ${clear ? "border-white/40 hover:bg-white hover:text-ink" : "border-line hover:bg-ink hover:text-white"}`}
+          >
+            <LogOut size={16} />
+          </button>
+        </form>
       {:else}
         <a
           href="/login"
@@ -197,14 +189,15 @@
               >{$t.nav.admin}</a
             >
           {/if}
-          <button
-            type="button"
-            on:click={logout}
-            class="flex items-center gap-2 border-t border-line pt-4 text-left font-bold text-red-600"
-          >
-            <LogOut size={16} />
-            {$t.nav.signOut}
-          </button>
+          <form method="POST" action="/logout">
+            <button
+              type="submit"
+              class="flex w-full items-center gap-2 border-t border-line pt-4 text-left font-bold text-red-600"
+            >
+              <LogOut size={16} />
+              {$t.nav.signOut}
+            </button>
+          </form>
         {:else}
           <a
             href="/#how"

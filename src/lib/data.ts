@@ -1,10 +1,8 @@
 /**
- * data.ts — LocalStorage helpers for reviews & wishlist fallback.
- * Places and Categories are now loaded from Supabase via server repositories.
- * Seed places and categories live in supabase/seed.sql.
+ * data.ts — LocalStorage helpers for wishlist fallback.
+ * Places, Categories, and Reviews are now loaded from Supabase via server repositories.
+ * Seed data lives in supabase/seed.sql.
  */
-
-import type { Review } from './types';
 
 const read = <T>(k: string, d: T): T => {
 	if (typeof localStorage === 'undefined') return d;
@@ -25,15 +23,7 @@ const write = (k: string, v: unknown) => {
 	}
 };
 
-// ─── Reviews (Fallback helpers for client/admin) ──────────────────────────────
-
-export function getReviews(): Review[] {
-	return read<Review[]>('reviews', []);
-}
-
-export const saveReviews = (v: Review[]) => write('reviews', v);
-
-// ─── Wishlist helpers ─────────────────────────────────────────────────────────
+// ─── Wishlist helpers (demo/fallback) ─────────────────────────────────────────
 
 export const getWishlist = (email: string): string[] =>
 	read<string[]>(`wish:${email}`, []);

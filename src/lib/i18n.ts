@@ -188,7 +188,20 @@ export const translations = {
 			similarPlaces: 'Tempat Serupa',
 			reviewSuccess: 'Ulasan Anda berhasil dikirim!',
 			reviewFailed: 'Gagal mengirim ulasan. Silakan coba lagi.',
-			ratingRequired: 'Silakan pilih rating bintang.'
+			ratingRequired: 'Silakan pilih rating bintang 1–5.',
+			editReview: 'Ubah Ulasan',
+			saveChanges: 'Simpan Perubahan',
+			deleteReview: 'Hapus Ulasan',
+			deleteConfirm: 'Apakah Anda yakin ingin menghapus ulasan ini?',
+			reviewDeleted: 'Ulasan Anda berhasil dihapus.',
+			textLengthError: 'Teks ulasan harus berisi antara 10 hingga 1000 karakter.',
+			photoSizeError: 'Ukuran berkas foto maksimal 2 MB.',
+			photoTypeError: 'Format foto harus berupa JPEG, PNG, atau WebP.',
+			photoUploadError: 'Gagal mengunggah foto ke penyimpanan.',
+			pageOf: 'Halaman {page} dari {totalPages}',
+			prevPage: 'Sebelumnya',
+			nextPage: 'Berikutnya',
+			removePhoto: 'Hapus foto'
 		},
 		login: {
 			welcomeBack: 'Selamat Datang Kembali',
@@ -475,7 +488,20 @@ export const translations = {
 			similarPlaces: 'Similar Places',
 			reviewSuccess: 'Your review has been submitted successfully!',
 			reviewFailed: 'Failed to submit review. Please try again.',
-			ratingRequired: 'Please select a star rating.'
+			ratingRequired: 'Please select a star rating (1–5).',
+			editReview: 'Edit Review',
+			saveChanges: 'Save Changes',
+			deleteReview: 'Delete Review',
+			deleteConfirm: 'Are you sure you want to delete this review?',
+			reviewDeleted: 'Your review has been deleted.',
+			textLengthError: 'Review text must be between 10 and 1000 characters.',
+			photoSizeError: 'Photo file size must not exceed 2 MB.',
+			photoTypeError: 'Photo format must be JPEG, PNG, or WebP.',
+			photoUploadError: 'Failed to upload photo to storage.',
+			pageOf: 'Page {page} of {totalPages}',
+			prevPage: 'Previous',
+			nextPage: 'Next',
+			removePhoto: 'Remove photo'
 		},
 		login: {
 			welcomeBack: 'Welcome back',

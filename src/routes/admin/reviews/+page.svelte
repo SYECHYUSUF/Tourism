@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Star, Eye, EyeOff, Trash2, Search } from 'lucide-svelte';
-	import { getReviews, saveReviews } from '$lib/data';
 	import { t } from '$lib/i18n';
 	import type { Review, Place } from '$lib/types';
 	import type { PageData } from './$types';
@@ -13,12 +12,11 @@
 	$: places = data.places || [];
 
 	onMount(() => {
-		reviews = getReviews();
+		reviews = [...(data.reviews || [])];
 	});
 
 	function commitReviews(v: Review[]) {
 		reviews = v;
-		saveReviews(v);
 	}
 
 	function placeName(id: string) {

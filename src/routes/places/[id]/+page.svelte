@@ -15,7 +15,8 @@
 		Share2,
 		Check,
 		Sparkles,
-		ShieldCheck
+		ShieldCheck,
+		Trash2
 	} from 'lucide-svelte';
 	import Stars from '$components/Stars.svelte';
 	import MapComponent from '$components/MapComponent.svelte';
@@ -34,14 +35,34 @@
 	$: place = data.place;
 	$: all = data.all;
 	$: reviews = data.reviews || [];
+	$: userReview = data.userReview || null;
 
 	let active = 0;
-	let reviewForm = { r: 5, t: '', photo: '' };
+	let reviewForm = { r: 5, t: '' };
+	let selectedBlob: Blob | null = null;
+	let previewUrl: string | null = null;
+	let removePhoto = false;
 	let submitting = false;
+	let deleting = false;
+
 	let prefs: Prefs;
 	let origin: [number, number] = [-8.6913, 115.1682]; // default Seminyak
 	$: currentUser = $page.data.user;
 	let copied = false;
+
+	// Populate form with user's existing review if present
+	$: if (userReview) {
+		reviewForm.r = userReview.rating;
+		reviewForm.t = userReview.reviewText;
+		if (!selectedBlob && !removePhoto) {
+			previewUrl = userReview.photoUrl || null;
+		}
+	} else if (!form || !('values' in form) || !form.values) {
+		reviewForm = { r: 5, t: '' };
+		if (!selectedBlob) {
+			previewUrl = null;
+		}
+	}
 
 	onMount(() => {
 		prefs = loadPrefs();
@@ -53,24 +74,52 @@
 			? place.gallery
 			: [place.image];
 
-	$: mine = reviews.filter((r) => r.placeId === place.id && !r.hidden);
-	$: avg = mine.length ? mine.reduce((a, r) => a + r.rating, 0) / mine.length : place.rating;
-
 	function pickPhoto(files: FileList | null) {
 		const f = files?.[0];
 		if (!f) return;
 		const img = new Image();
-		const url = URL.createObjectURL(f);
+		const objectUrl = URL.createObjectURL(f);
 		img.onload = () => {
 			const c = document.createElement('canvas');
-			const s = Math.min(1, 640 / img.width);
+			const maxDim = 1200;
+			const s = Math.min(1, maxDim / Math.max(img.width, img.height));
 			c.width = img.width * s;
 			c.height = img.height * s;
-			c.getContext('2d')?.drawImage(img, 0, 0, c.width, c.height);
-			reviewForm.photo = c.toDataURL('image/jpeg', 0.7);
-			URL.revokeObjectURL(url);
+			const ctx = c.getContext('2d');
+			ctx?.drawImage(img, 0, 0, c.width, c.height);
+			c.toBlob(
+				(blob) => {
+					if (blob) {
+						selectedBlob = blob;
+						if (previewUrl && previewUrl.startsWith('blob:')) {
+							URL.revokeObjectURL(previewUrl);
+						}
+						previewUrl = URL.createObjectURL(blob);
+						removePhoto = false;
+					}
+				},
+				'image/jpeg',
+				0.82
+			);
+			URL.revokeObjectURL(objectUrl);
 		};
-		img.src = url;
+		img.src = objectUrl;
+	}
+
+	function handleRemovePhoto() {
+		if (previewUrl && previewUrl.startsWith('blob:')) {
+			URL.revokeObjectURL(previewUrl);
+		}
+		previewUrl = null;
+		selectedBlob = null;
+		removePhoto = true;
+	}
+
+	function handleDeleteReview() {
+		if (confirm($t.detail.deleteConfirm)) {
+			const deleteForm = document.getElementById('delete-review-form') as HTMLFormElement;
+			deleteForm?.requestSubmit();
+		}
 	}
 
 	function sharePlace() {
@@ -148,8 +197,8 @@
 
 			<div class="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-soft">
 				<span class="flex items-center gap-2">
-					<Stars value={avg} />
-					<b class="text-ink">{avg.toFixed(1)}</b> ({mine.length} {$t.detail.reviewsCount})
+					<Stars value={place.rating} />
+					<b class="text-ink">{place.rating.toFixed(1)}</b> ({place.reviewCount} {$t.detail.reviewsCount})
 				</span>
 				<span class="flex items-center gap-1">
 					<MapPin size={14} />{place.address}
@@ -211,39 +260,83 @@
 
 			<!-- Reviews Section -->
 			<section class="mt-14">
-				<h2 class="text-2xl font-extrabold">{$t.detail.reviews}</h2>
+				<div class="flex items-baseline justify-between">
+					<h2 class="text-2xl font-extrabold">{$t.detail.reviews}</h2>
+					<span class="mono text-sm text-slate-soft">
+						{data.totalReviews} {$t.detail.reviewsCount}
+					</span>
+				</div>
+
+				{#if form?.deleteSuccess}
+					<div class="mt-4 border border-emerald-500 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+						{form.message || $t.detail.reviewDeleted}
+					</div>
+				{/if}
 
 				{#if currentUser}
 					{#if form?.reviewSuccess}
 						<div class="mt-4 border border-emerald-500 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
 							{form.message || $t.detail.reviewSuccess}
 						</div>
-					{:else if form?.reviewError}
+					{:else if form?.reviewError && form?.message}
 						<div class="mt-4 border border-red-500 bg-red-50 p-4 text-sm font-semibold text-red-800">
-							{form.message || $t.detail.reviewFailed}
+							{form.message}
 						</div>
 					{/if}
+
+					<!-- Hidden form for deleting review -->
+					<form
+						id="delete-review-form"
+						method="POST"
+						action="?/deleteReview"
+						use:enhance={() => {
+							deleting = true;
+							return async ({ update }) => {
+								await update();
+								deleting = false;
+								selectedBlob = null;
+								previewUrl = null;
+								removePhoto = false;
+								reviewForm = { r: 5, t: '' };
+							};
+						}}
+						class="hidden"
+					/>
 
 					<form
 						method="POST"
 						action="?/review"
-						use:enhance={() => {
+						enctype="multipart/form-data"
+						use:enhance={({ formData }) => {
 							submitting = true;
+							if (selectedBlob) {
+								formData.set('photo', selectedBlob, 'photo.jpg');
+							}
+							if (removePhoto) {
+								formData.set('removePhoto', 'true');
+							}
 							return async ({ update, result }) => {
 								await update();
 								submitting = false;
 								if (result.type === 'success') {
-									reviewForm = { r: 5, t: '', photo: '' };
+									selectedBlob = null;
+									removePhoto = false;
 								}
 							};
 						}}
 						class="mt-4 space-y-4 border border-line bg-white p-5"
 					>
 						<input type="hidden" name="rating" value={reviewForm.r} />
-						<input type="hidden" name="photo" value={reviewForm.photo} />
 
 						<div class="flex items-center justify-between">
-							<span class="text-sm font-semibold">{$t.detail.reviewingAs} {currentUser.name}</span>
+							<span class="text-sm font-semibold">
+								{$t.detail.reviewingAs} {currentUser.name}
+								{#if userReview}
+									<span class="ml-2 rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+										{$t.detail.editReview}
+									</span>
+								{/if}
+							</span>
 							<div class="flex gap-1" role="radiogroup" aria-label="Rating">
 								{#each [1, 2, 3, 4, 5] as i}
 									<button
@@ -261,15 +354,28 @@
 								{/each}
 							</div>
 						</div>
+						{#if form?.errors?.rating}
+							<p class="text-xs font-semibold text-red-600">{form.errors.rating}</p>
+						{/if}
 
 						<textarea
 							required
 							name="reviewText"
 							bind:value={reviewForm.t}
 							rows="3"
+							minlength="10"
+							maxlength="1000"
 							placeholder={$t.detail.shareExperience}
 							class="w-full border border-line px-4 py-3 outline-none focus:border-brand"
 						/>
+						<div class="flex justify-between text-xs text-slate-400">
+							{#if form?.errors?.reviewText}
+								<span class="font-semibold text-red-600">{form.errors.reviewText}</span>
+							{:else}
+								<span>{$t.detail.textLengthError}</span>
+							{/if}
+							<span>{reviewForm.t.length} / 1000</span>
+						</div>
 
 						<div class="flex flex-wrap items-center justify-between gap-3">
 							<div class="flex items-center gap-3">
@@ -279,36 +385,57 @@
 									<ImagePlus size={14} />{$t.detail.addPhoto}
 									<input
 										type="file"
-										accept="image/*"
+										accept="image/jpeg,image/png,image/webp"
 										class="hidden"
 										on:change={(e) => pickPhoto(e.currentTarget.files)}
 									/>
 								</label>
-								{#if reviewForm.photo}
+								{#if previewUrl}
 									<span class="relative">
 										<img
-											src={reviewForm.photo}
-											alt="Preview"
-											class="h-10 w-10 object-cover"
+											src={previewUrl}
+											alt="Review attachment preview"
+											class="h-12 w-12 rounded object-cover border border-line"
 										/>
 										<button
 											type="button"
-											aria-label="Remove photo"
-											on:click={() => (reviewForm.photo = '')}
-											class="absolute -right-2 -top-2 grid h-4 w-4 place-items-center bg-ink text-white"
+											aria-label={$t.detail.removePhoto}
+											on:click={handleRemovePhoto}
+											class="absolute -right-2 -top-2 grid h-5 w-5 place-items-center rounded-full bg-ink text-white hover:bg-red-600"
 										>
-											<X size={10} />
+											<X size={12} />
 										</button>
 									</span>
 								{/if}
+								{#if form?.errors?.photo}
+									<span class="text-xs font-semibold text-red-600">{form.errors.photo}</span>
+								{/if}
 							</div>
-							<button
-								type="submit"
-								disabled={submitting}
-								class="bg-brand px-6 py-2.5 font-bold text-white transition hover:bg-emerald-deep disabled:opacity-50"
-							>
-								{submitting ? $t.common.loading : $t.detail.postReview}
-							</button>
+
+							<div class="flex items-center gap-2">
+								{#if userReview}
+									<button
+										type="button"
+										disabled={deleting || submitting}
+										on:click={handleDeleteReview}
+										class="flex items-center gap-1.5 border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+									>
+										<Trash2 size={15} />
+										{$t.detail.deleteReview}
+									</button>
+								{/if}
+								<button
+									type="submit"
+									disabled={submitting || deleting}
+									class="bg-brand px-6 py-2.5 font-bold text-white transition hover:bg-emerald-deep disabled:opacity-50"
+								>
+									{submitting
+										? $t.common.loading
+										: userReview
+											? $t.detail.saveChanges
+											: $t.detail.postReview}
+								</button>
+							</div>
 						</div>
 					</form>
 				{:else}
@@ -317,7 +444,7 @@
 					>
 						<p class="text-slate-soft">{$t.detail.signInPrompt}</p>
 						<a
-							href="/login"
+							href="/login?redirectTo=/places/{place.id}"
 							class="bg-ink px-5 py-2.5 text-sm font-bold text-white hover:bg-brand"
 						>
 							{$t.detail.signInBtn}
@@ -325,35 +452,78 @@
 					</div>
 				{/if}
 
+				<!-- Reviews List -->
 				<ul class="mt-6 divide-y divide-line">
-					{#each mine as r (r.id)}
+					{#each reviews as r (r.id)}
 						<li class="flex gap-4 py-5">
 							<span
 								class="grid h-10 w-10 shrink-0 place-items-center bg-ocean-soft font-bold text-ocean"
 							>
 								{r.reviewerName?.[0] ?? 'U'}
 							</span>
-							<div>
+							<div class="w-full">
 								<div class="flex flex-wrap items-center gap-3">
 									<b>{r.reviewerName}</b>
+									{#if currentUser && r.userId === currentUser.id}
+										<span class="rounded bg-brand-soft px-2 py-0.5 text-xs font-bold text-emerald-deep">
+											{$locale === 'id' ? 'Ulasan Anda' : 'Your Review'}
+										</span>
+									{/if}
 									<Stars value={r.rating} size={12} />
 									<span class="mono text-slate-400">{r.createdAt}</span>
 								</div>
-								<p class="mt-1 text-slate-soft">{r.reviewText}</p>
+								<p class="mt-1 text-slate-soft leading-relaxed">{r.reviewText}</p>
 								{#if r.photoUrl}
-									<img
-										src={r.photoUrl}
-										alt="Review attachment"
-										class="mt-3 h-28 w-40 object-cover"
-									/>
+									<a href={r.photoUrl} target="_blank" rel="noreferrer" class="mt-3 inline-block">
+										<img
+											src={r.photoUrl}
+											alt="Review attachment"
+											class="h-28 w-40 object-cover rounded border border-line transition hover:opacity-95"
+										/>
+									</a>
 								{/if}
 							</div>
 						</li>
 					{/each}
-					{#if mine.length === 0}
+					{#if reviews.length === 0}
 						<li class="py-8 text-slate-soft">{$t.detail.noReviews}</li>
 					{/if}
 				</ul>
+
+				<!-- Pagination Controls -->
+				{#if data.totalPages > 1}
+					<div class="mt-8 flex items-center justify-between border-t border-line pt-4">
+						{#if data.page > 1}
+							<a
+								href="/places/{place.id}?page={data.page - 1}"
+								class="mono border border-line bg-white px-4 py-2 text-sm font-bold text-ink hover:border-brand hover:text-brand"
+							>
+								← {$t.detail.prevPage}
+							</a>
+						{:else}
+							<span class="mono border border-transparent px-4 py-2 text-sm text-slate-300">
+								← {$t.detail.prevPage}
+							</span>
+						{/if}
+
+						<span class="mono text-sm text-slate-soft">
+							{$t.detail.pageOf.replace('{page}', String(data.page)).replace('{totalPages}', String(data.totalPages))}
+						</span>
+
+						{#if data.page < data.totalPages}
+							<a
+								href="/places/{place.id}?page={data.page + 1}"
+								class="mono border border-line bg-white px-4 py-2 text-sm font-bold text-ink hover:border-brand hover:text-brand"
+							>
+								{$t.detail.nextPage} →
+							</a>
+						{:else}
+							<span class="mono border border-transparent px-4 py-2 text-sm text-slate-300">
+								{$t.detail.nextPage} →
+							</span>
+						{/if}
+					</div>
+				{/if}
 			</section>
 		</div>
 

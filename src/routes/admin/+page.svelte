@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { getReviews } from '$lib/data';
 	import { t } from '$lib/i18n';
 	import type { Place, Review } from '$lib/types';
 	import type { PageData } from './$types';
@@ -20,11 +18,7 @@
 	];
 
 	$: places = data.places || [];
-	let reviews: Review[] = [];
-
-	onMount(() => {
-		reviews = getReviews();
-	});
+	$: reviews = data.reviews || [];
 
 	// Analytics report
 	$: report = (() => {

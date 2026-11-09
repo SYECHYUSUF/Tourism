@@ -2,12 +2,14 @@
 
 export type Role = 'admin' | 'user';
 
-export interface UserProfile {
+export interface AppUser {
 	id: string;
 	email: string;
 	name: string;
 	role: Role;
 }
+
+export interface UserProfile extends AppUser {}
 
 export interface Category {
 	id: number;

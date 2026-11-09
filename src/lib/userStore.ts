@@ -1,4 +1,6 @@
-import { writable } from 'svelte/store';
+import { derived } from 'svelte/store';
+import { page } from '$app/stores';
+import type { AppUser } from './types';
 
 export interface UserSession {
 	id?: string;
@@ -7,45 +9,26 @@ export interface UserSession {
 	role: 'admin' | 'user' | string;
 }
 
-function createUserStore() {
-	const { subscribe, set } = writable<UserSession | null>(null);
+/**
+ * userStore is a read-only store derived from SvelteKit's $page.data.user.
+ * It NEVER reads or writes to localStorage or document.cookie.
+ * Session state is managed exclusively through verified Supabase SSR cookies.
+ */
+export const userStore = {
+	subscribe: derived(page, ($page) => ($page.data?.user as AppUser | null) ?? null).subscribe,
 
-	return {
-		subscribe,
-		init(initialUser?: any) {
-			if (initialUser?.email) {
-				set(initialUser);
-				return;
-			}
-			if (typeof localStorage !== 'undefined') {
-				try {
-					const s = JSON.parse(localStorage.getItem('session') || 'null');
-					if (s?.email) {
-						set(s);
-						return;
-					}
-				} catch {}
-			}
-		},
-		login(u: UserSession) {
-			if (typeof localStorage !== 'undefined') {
-				localStorage.setItem('session', JSON.stringify(u));
-			}
-			if (typeof document !== 'undefined') {
-				document.cookie = `session=${encodeURIComponent(JSON.stringify(u))}; path=/; max-age=604800; SameSite=Lax`;
-			}
-			set(u);
-		},
-		logout() {
-			if (typeof localStorage !== 'undefined') {
-				localStorage.removeItem('session');
-			}
-			if (typeof document !== 'undefined') {
-				document.cookie = 'session=; path=/; max-age=0; SameSite=Lax';
-			}
-			set(null);
-		}
-	};
-}
+	/** @deprecated No-op: user session is handled by Supabase SSR. */
+	init(_initialUser?: unknown): void {
+		// No-op
+	},
 
-export const userStore = createUserStore();
+	/** @deprecated No-op: login is handled by supabase.auth.signInWithPassword. */
+	login(_u: unknown): void {
+		// No-op
+	},
+
+	/** @deprecated No-op: sign out is handled by supabase.auth.signOut. */
+	logout(): void {
+		// No-op
+	}
+};

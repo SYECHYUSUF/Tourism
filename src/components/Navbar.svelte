@@ -3,17 +3,17 @@
   import { goto } from "$app/navigation";
   import { Compass, LogOut, Menu, X } from "lucide-svelte";
   import LangSwitcher from "$components/LangSwitcher.svelte";
-  import { userStore } from "$lib/userStore";
   import { t } from "$lib/i18n";
   import { onMount } from "svelte";
+  import type { AppUser } from "$lib/types";
 
-  export let user: { name: string; role: string; email?: string } | null = null;
+  export let user: AppUser | null = null;
 
   let scrolled = false;
   let isHome = false;
   let mobileMenuOpen = false;
 
-  $: activeUser = $userStore || user;
+  $: activeUser = $page.data.user || user;
   $: isHome = $page.url.pathname === "/" || $page.url.pathname === "/home";
 
   // Track scroll on the client
@@ -22,7 +22,6 @@
   }
 
   onMount(() => {
-    userStore.init(user);
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -40,7 +39,6 @@
       const { supabase } = await import("$lib/supabaseClient");
       await supabase.auth.signOut();
     } catch {}
-    userStore.logout();
     mobileMenuOpen = false;
     goto("/");
   }

@@ -40,12 +40,13 @@ export interface Database {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: a table descriptor with Row / Insert / Update shapes
+// Helper: a table descriptor with Row / Insert / Update / Relationships shapes
 // ---------------------------------------------------------------------------
 interface TableDef<Row, Insert = Partial<Row>, Update = Partial<Row>> {
-  Row:    Row;
-  Insert: Insert;
-  Update: Update;
+  Row:           Row;
+  Insert:        Insert;
+  Update:        Update;
+  Relationships: [];
 }
 
 // ---------------------------------------------------------------------------

@@ -2,21 +2,31 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
+	import { invalidate } from '$app/navigation';
 	import Navbar from '$components/Navbar.svelte';
 	import Footer from '$components/Footer.svelte';
-	import { userStore } from '$lib/userStore';
 	import type { LayoutData } from './$types';
 
 	export let data: LayoutData;
+
+	$: ({ supabase, user } = data);
 	$: isAdmin = $page.url.pathname.startsWith('/admin');
 
 	onMount(() => {
-		userStore.init(data.user);
+		const {
+			data: { subscription }
+		} = supabase.auth.onAuthStateChange((_event, _session) => {
+			invalidate('supabase:auth');
+		});
+
+		return () => {
+			subscription.unsubscribe();
+		};
 	});
 </script>
 
 {#if !isAdmin}
-	<Navbar />
+	<Navbar {user} />
 {/if}
 
 <slot />

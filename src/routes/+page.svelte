@@ -22,6 +22,9 @@
 
 <svelte:head>
 	<title>{$t.landing.badge} — Jelajah</title>
+	<meta name="description" content={$t.footer.tagline} />
+	<meta property="og:title" content="Jelajah" />
+	<meta property="og:description" content={$t.footer.tagline} />
 </svelte:head>
 
 <main>

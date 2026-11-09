@@ -14,7 +14,8 @@
 		Tag,
 		LocateFixed
 	} from 'lucide-svelte';
-	import { loadPrefs, savePrefs } from '$lib/prefs';
+	import { DEFAULT_PREFS, hasStoredPrefs, loadPrefs } from '$lib/prefs';
+	import { submitSearch } from '$lib/search';
 	import { ORIGINS } from '$lib/scoring';
 	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
@@ -32,14 +33,7 @@
 	};
 
 	let step = 0;
-	let p: Prefs = {
-		categories: ['Culinary', 'Beach'],
-		min: 25000,
-		max: 500000,
-		radius: 20,
-		priority: 'balanced',
-		origin: 'Seminyak'
-	};
+	let p: Prefs = { ...DEFAULT_PREFS };
 	$: categoriesList = data.categories?.length > 0
 		? data.categories
 		: ['Culinary', 'Cafe', 'Nature', 'Culture', 'Beach', 'Resort'];
@@ -55,7 +49,8 @@
 	];
 
 	onMount(() => {
-		p = loadPrefs();
+		// Urutan: preferensi sesi ini → preferensi tersimpan di akun → default
+		p = hasStoredPrefs() ? loadPrefs() : data.savedPrefs ?? { ...DEFAULT_PREFS };
 	});
 
 	function toggle(c: string) {
@@ -83,8 +78,7 @@
 	}
 
 	function submit() {
-		savePrefs(p);
-		goto('/results');
+		goto(submitSearch(p));
 	}
 </script>
 

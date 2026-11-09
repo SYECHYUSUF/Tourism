@@ -3,7 +3,8 @@
 	import { goto } from '$app/navigation';
 	import { ArrowRight, ArrowDown } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { loadPrefs, savePrefs } from '$lib/prefs';
+	import { loadPrefs } from '$lib/prefs';
+	import { submitSearch } from '$lib/search';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { userStore } from '$lib/userStore';
 	import { t } from '$lib/i18n';
@@ -50,8 +51,7 @@
 			max: budget,
 			radius
 		};
-		savePrefs(np);
-		goto('/results');
+		goto(submitSearch(np));
 	}
 
 	const field = 'w-full bg-transparent py-1 font-display text-lg font-bold outline-none';

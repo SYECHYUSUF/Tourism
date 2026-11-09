@@ -62,11 +62,22 @@ const supabaseHandle: Handle = async ({ event, resolve }) => {
 		event.locals.user = null;
 	}
 
-	return resolve(event, {
+	const cookieLocale = event.cookies.get('locale');
+	event.locals.locale = cookieLocale === 'en' ? 'en' : 'id';
+
+	const response = await resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range' || name === 'x-supabase-api-version';
-		}
+		},
+		transformPageChunk: ({ html }) => html.replace('%lang%', event.locals.locale)
 	});
+
+	// Header keamanan dasar
+	response.headers.set('X-Frame-Options', 'DENY');
+	response.headers.set('X-Content-Type-Options', 'nosniff');
+	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
+	return response;
 };
 
 const authGuard: Handle = async ({ event, resolve }) => {

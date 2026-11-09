@@ -1,28 +1,33 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { SlidersHorizontal, Pencil, Search, LayoutGrid, Map as MapIcon } from 'lucide-svelte';
+	import { onMount, tick } from 'svelte';
+	import { page } from '$app/stores';
+	import { replaceState } from '$app/navigation';
+	import { SlidersHorizontal, Pencil, Search, LayoutGrid, Map as MapIcon, Link2 } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
 	import PlacesMap from '$components/PlacesMap.svelte';
-	import { loadPrefs } from '$lib/prefs';
+	import {
+		DEFAULT_PREFS,
+		MY_LOCATION,
+		hasStoredPrefs,
+		loadPrefs,
+		prefsFromQuery,
+		prefsToQuery,
+		sanitizePrefs,
+		savePrefs
+	} from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
-	import { t, locale } from '$lib/i18n';
+	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
-	import type { Place, Prefs } from '$lib/types';
+	import type { Prefs } from '$lib/types';
 
 	export let data: PageData;
 
-	let prefs: Prefs = {
-		categories: ['Culinary', 'Beach'],
-		min: 25000,
-		max: 500000,
-		radius: 20,
-		priority: 'balanced',
-		origin: 'Seminyak'
-	};
+	let prefs: Prefs = { ...DEFAULT_PREFS };
 
 	$: allPlaces = data.places || [];
 	$: categoriesList = data.categories || [];
 
+	const SORTS = ['match', 'rating', 'price', 'distance'];
 	let q = '';
 	let sort = 'match';
 	let maxPrice = 2500000;
@@ -31,12 +36,72 @@
 	let selectedCats: string[] = [];
 	let openMobileFilters = false;
 	let viewMode: 'grid' | 'map' = 'grid';
+	let mounted = false;
+	let locationLost = false;
+	let copied = false;
 
-	onMount(() => {
-		prefs = loadPrefs();
+	onMount(async () => {
+		const url = $page.url.searchParams;
+		const fromUrl = prefsFromQuery(url);
+		const session = loadPrefs();
+
+		if (fromUrl) {
+			// Link yang dibagikan: koordinat GPS tidak ikut di URL, ambil dari sesi bila ada.
+			const wantsGps = fromUrl.origin === MY_LOCATION;
+			const coords = wantsGps && session.origin === MY_LOCATION ? session.coords : undefined;
+			prefs = sanitizePrefs({ ...fromUrl, coords }, categoriesList.length ? categoriesList : undefined);
+			locationLost = wantsGps && prefs.origin !== MY_LOCATION;
+			savePrefs(prefs);
+		} else if (hasStoredPrefs()) {
+			prefs = session;
+		} else if (data.savedPrefs) {
+			prefs = data.savedPrefs;
+		}
+
+		// Filter tambahan dari URL (supaya tidak hilang saat kembali dari halaman detail)
 		maxDist = Math.max(60, prefs.radius * 2);
 		maxPrice = Math.max(2500000, prefs.max * 2);
+		q = (url.get('q') ?? '').slice(0, 80);
+		sort = SORTS.includes(url.get('sort') ?? '') ? url.get('sort')! : 'match';
+		const num = (k: string, fb: number, lo: number, hi: number) => {
+			const n = Number(url.get(k));
+			return url.has(k) && Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : fb;
+		};
+		maxPrice = num('mp', maxPrice, 0, 100_000_000);
+		maxDist = num('md', maxDist, 1, 500);
+		minRating = num('mr', 0, 0, 5);
+		selectedCats = (url.get('sc') ?? '').split(',').filter((c) => c && categoriesList.includes(c));
+		viewMode = url.get('view') === 'map' ? 'map' : 'grid';
+
+		await tick();
+		mounted = true;
 	});
+
+	function syncUrl(..._deps: unknown[]) {
+		if (!mounted) return;
+		const u = new URL($page.url);
+		const next = prefsToQuery(prefs);
+		if (q.trim()) next.set('q', q.trim());
+		if (sort !== 'match') next.set('sort', sort);
+		next.set('mp', String(maxPrice));
+		next.set('md', String(maxDist));
+		if (minRating > 0) next.set('mr', String(minRating));
+		if (selectedCats.length) next.set('sc', selectedCats.join(','));
+		if (viewMode === 'map') next.set('view', 'map');
+		u.search = next.toString();
+		if (u.href !== $page.url.href) replaceState(u, $page.state);
+	}
+	$: syncUrl(prefs, q, sort, maxPrice, maxDist, minRating, selectedCats, viewMode, mounted);
+
+	async function copyLink() {
+		try {
+			await navigator.clipboard.writeText(window.location.href);
+			copied = true;
+			setTimeout(() => (copied = false), 2500);
+		} catch {
+			/* clipboard tidak tersedia */
+		}
+	}
 
 	function toggleCat(c: string) {
 		selectedCats = selectedCats.includes(c)
@@ -80,13 +145,19 @@
 </svelte:head>
 
 <main class="mx-auto max-w-[1400px] px-5 py-10 lg:px-10">
+	{#if locationLost}
+		<p role="status" class="mb-6 border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+			{$t.results.locationLost}
+		</p>
+	{/if}
+
 	<!-- Page Header -->
 	<div class="flex flex-wrap items-end justify-between gap-4">
 		<div>
 			<p class="mono text-brand">{$t.results.badge}</p>
 			<h1 class="mt-1 text-4xl font-extrabold tracking-tight">{$t.results.title}</h1>
 			<p class="mt-2 text-slate-soft">
-				{list.length} tempat · {prefs.categories.join(', ') || $t.common.any} · Rp {prefs.min.toLocaleString('id-ID')}–Rp {prefs.max.toLocaleString('id-ID')}
+				{$t.results.placesCount.replace('{n}', String(list.length))} · {prefs.categories.join(', ') || $t.common.any} · Rp {prefs.min.toLocaleString('id-ID')}–Rp {prefs.max.toLocaleString('id-ID')}
 				· {prefs.radius} km {$t.find.fromOrigin} {prefs.coords ? $t.find.you : prefs.origin}
 			</p>
 		</div>
@@ -101,7 +172,7 @@
 						: 'text-slate-soft hover:text-ink'}"
 					aria-pressed={viewMode === 'grid'}
 				>
-					<LayoutGrid size={14} /> {$locale === 'id' ? 'Daftar' : 'Grid'}
+					<LayoutGrid size={14} /> {$t.results.viewGrid}
 				</button>
 				<button
 					type="button"
@@ -111,10 +182,17 @@
 						: 'text-slate-soft hover:text-ink'}"
 					aria-pressed={viewMode === 'map'}
 				>
-					<MapIcon size={14} /> {$locale === 'id' ? 'Peta' : 'Map'} ({list.length})
+					<MapIcon size={14} /> {$t.results.viewMap} ({list.length})
 				</button>
 			</div>
 
+			<button
+				type="button"
+				on:click={copyLink}
+				class="inline-flex items-center gap-2 border border-line bg-white px-4 py-2 text-sm font-semibold hover:border-brand"
+			>
+				<Link2 size={14} />{copied ? $t.results.linkCopied : $t.results.copyLink}
+			</button>
 			<a
 				href="/find"
 				class="inline-flex items-center gap-2 border border-line bg-white px-4 py-2 text-sm font-semibold hover:border-brand"
@@ -228,7 +306,7 @@
 								? 'border-brand bg-brand text-white'
 								: 'border-line bg-white hover:border-slate-400'}"
 						>
-							{r === 0 ? ($locale === 'id' ? 'Semua' : 'Any') : `${r}+`}
+							{r === 0 ? $t.results.anyRating : `${r}+`}
 						</button>
 					{/each}
 				</div>
@@ -319,7 +397,7 @@
 									? 'border-brand bg-brand text-white'
 									: 'border-line bg-white hover:border-slate-400'}"
 							>
-								{r === 0 ? ($locale === 'id' ? 'Semua' : 'Any') : `${r}+`}
+								{r === 0 ? $t.results.anyRating : `${r}+`}
 							</button>
 						{/each}
 					</div>

@@ -1,29 +1,27 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { page } from '$app/stores';
 	import { Trash2, Search } from 'lucide-svelte';
 	import { t } from '$lib/i18n';
+	import type { ActionData, PageData } from './$types';
 
-	interface Acct {
-		name: string;
-		email: string;
-		role: 'admin' | 'user';
-		locked?: boolean;
+	export let data: PageData;
+	export let form: ActionData;
+
+	let toast = '';
+	$: errors = ((form as any)?.errors ?? {}) as Record<string, string>;
+	$: meId = $page.data.user?.id;
+
+	function showToast(msg: string) {
+		toast = msg;
+		setTimeout(() => (toast = ''), 3000);
 	}
 
-	const seedUsers: Acct[] = [
-		{ name: 'Admin Jelajah', email: 'admin@jelajah.id', role: 'admin', locked: true },
-		{ name: 'Rani Putri', email: 'user@jelajah.id', role: 'user', locked: true }
-	];
-
-	let q = '';
-	let accts: Acct[] = [];
-
-	function commitAccts(v: Acct[]) {
-		accts = v;
+	function pageHref(n: number) {
+		const u = new URL($page.url);
+		u.searchParams.set('page', String(n));
+		return u.pathname + u.search;
 	}
-
-	$: allUsers = [...seedUsers, ...accts];
-	$: term = q.toLowerCase();
-	$: filteredUsers = allUsers.filter((u) => (u.name + u.email).toLowerCase().includes(term));
 
 	const th = 'px-5 py-3 font-bold';
 </script>
@@ -39,77 +37,113 @@
 			<h1 class="text-3xl font-extrabold tracking-tight">{$t.admin.tabs.users}</h1>
 		</div>
 
-		<label class="flex w-full max-w-xs items-center gap-2 border border-line bg-white px-4 py-2 focus-within:border-brand">
+		<form method="GET" class="flex w-full max-w-xs items-center gap-2 border border-line bg-white px-4 py-2 focus-within:border-brand">
 			<Search size={16} class="text-slate-400" />
 			<input
-				bind:value={q}
+				name="q"
+				value={data.q}
 				placeholder={$t.admin.searchPlaceholder}
+				aria-label={$t.admin.searchPlaceholder}
 				class="w-full bg-transparent text-sm outline-none"
 			/>
-		</label>
+		</form>
 	</div>
+
+	{#if errors.form}
+		<p role="alert" class="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700">{errors.form}</p>
+	{/if}
 
 	<section class="border border-line bg-white">
 		<div class="overflow-x-auto">
-			<table class="w-full min-w-[640px] text-left text-sm">
+			<table class="w-full min-w-[760px] text-left text-sm">
 				<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 					<tr>
-						{#each [$t.admin.table.name, $t.admin.table.email, $t.admin.table.role, ''] as h}
+						{#each [$t.admin.table.name, $t.admin.table.email, $t.admin.table.role, $t.admin.f.joined, ''] as h}
 							<th class={th}>{h}</th>
 						{/each}
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-line">
-					{#each filteredUsers as u (u.email)}
+					{#each data.users as u (u.id)}
 						<tr>
-							<td class="px-5 py-3 font-bold">{u.name}</td>
+							<td class="px-5 py-3 font-bold">
+								{u.name}
+								{#if u.id === meId}<span class="mono ml-1 text-xs text-brand">({$t.admin.f.you})</span>{/if}
+							</td>
 							<td class="px-5 py-3">{u.email}</td>
 							<td class="px-5 py-3">
-								<span
-									class="mono px-2 py-1 {u.role === 'admin'
-										? 'bg-ocean-soft text-ocean font-bold'
-										: 'bg-brand-soft text-emerald-deep'}"
-								>
+								<span class="mono px-2 py-1 {u.role === 'admin' ? 'bg-ocean-soft font-bold text-ocean' : 'bg-brand-soft text-emerald-deep'}">
 									{u.role}
 								</span>
 							</td>
+							<td class="mono px-5 py-3 text-slate-soft">{u.createdAt}</td>
 							<td class="px-5 py-3">
 								<div class="flex justify-end gap-1">
-									{#if u.locked}
-										<span class="mono py-2 text-slate-400">{$t.admin.table.builtIn}</span>
+									{#if u.id === meId}
+										<span class="mono py-2 text-slate-400">—</span>
 									{:else}
-										<button
-											type="button"
-											on:click={() =>
-												commitAccts(
-													accts.map((a) =>
-														a.email === u.email
-															? { ...a, role: a.role === 'admin' ? 'user' : 'admin' }
-															: a
-													)
-												)}
-											class="px-3 py-1.5 text-sm font-semibold text-ocean hover:bg-ocean-soft"
+										<form
+											method="POST"
+											action="?/setRole"
+											use:enhance={() =>
+												async ({ result, update }) => {
+													await update();
+													if (result.type === 'success') showToast($t.admin.f.saved);
+												}}
 										>
-											Make {u.role === 'admin' ? 'user' : 'admin'}
-										</button>
-										<button
-											type="button"
-											aria-label="Delete"
-											on:click={() =>
-												confirm(`Hapus pengguna ${u.name}?`) &&
-												commitAccts(accts.filter((a) => a.email !== u.email))}
-											class="p-2 text-slate-soft hover:bg-red-50 hover:text-red-600"
+											<input type="hidden" name="id" value={u.id} />
+											<input type="hidden" name="role" value={u.role === 'admin' ? 'user' : 'admin'} />
+											<button type="submit" class="px-3 py-1.5 text-sm font-semibold text-ocean hover:bg-ocean-soft">
+												{u.role === 'admin' ? $t.admin.f.makeUser : $t.admin.f.makeAdmin}
+											</button>
+										</form>
+										<form
+											method="POST"
+											action="?/delete"
+											use:enhance={({ cancel }) => {
+												if (!confirm($t.admin.f.deleteConfirm.replace('{name}', u.email))) return cancel();
+												return async ({ result, update }) => {
+													await update();
+													if (result.type === 'success') showToast($t.admin.f.deleted);
+												};
+											}}
 										>
-											<Trash2 size={16} />
-										</button>
+											<input type="hidden" name="id" value={u.id} />
+											<button
+												type="submit"
+												aria-label="{$t.admin.f.delete} {u.email}"
+												class="p-2 text-slate-soft hover:bg-red-50 hover:text-red-600"
+											>
+												<Trash2 size={16} />
+											</button>
+										</form>
 									{/if}
 								</div>
 							</td>
 						</tr>
+					{:else}
+						<tr><td colspan="5" class="p-8 text-center text-slate-soft">{$t.admin.f.empty}</td></tr>
 					{/each}
 				</tbody>
 			</table>
 		</div>
+
+		{#if data.page > 1 || data.hasNext}
+			<nav class="flex items-center justify-between border-t border-line p-4 text-sm" aria-label="Pagination">
+				{#if data.page > 1}
+					<a href={pageHref(data.page - 1)} class="font-semibold text-ocean hover:underline">{$t.admin.f.prev}</a>
+				{:else}<span />{/if}
+				<span class="mono text-slate-soft">{data.page}</span>
+				{#if data.hasNext}
+					<a href={pageHref(data.page + 1)} class="font-semibold text-ocean hover:underline">{$t.admin.f.next}</a>
+				{:else}<span />{/if}
+			</nav>
+		{/if}
 	</section>
 </div>
 
+{#if toast}
+	<div role="status" aria-live="polite" class="fixed bottom-5 right-5 z-[60] bg-forest px-5 py-3 text-sm font-semibold text-white shadow-lg">
+		{toast}
+	</div>
+{/if}

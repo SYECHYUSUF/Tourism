@@ -1,36 +1,24 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { Plus, Pencil, Trash2, Search } from 'lucide-svelte';
+	import { enhance } from '$app/forms';
+	import { Plus, Pencil, Trash2 } from 'lucide-svelte';
 	import { t } from '$lib/i18n';
-	import type { Place } from '$lib/types';
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
 	export let data: PageData;
+	export let form: ActionData;
 
-	let q = '';
-	let cats: string[] = [];
-	let places: Place[] = [];
-	let newCat = '';
-	let renaming: [string, string] | null = null;
+	let editingId: number | null = null;
+	let toast = '';
 
-	onMount(() => {
-		cats = [...(data.categories || [])];
-		places = [...(data.places || [])];
-	});
+	$: errors = ((form as any)?.errors ?? {}) as Record<string, string>;
 
-	function commitCats(v: string[]) {
-		cats = v;
+	function showToast(msg: string) {
+		toast = msg;
+		setTimeout(() => (toast = ''), 3000);
 	}
-
-	function commitPlaces(v: Place[]) {
-		places = v;
-	}
-
-	$: term = q.toLowerCase();
-	$: filteredCats = cats.filter((c) => c.toLowerCase().includes(term));
 
 	const th = 'px-5 py-3 font-bold';
-	const inputCls = 'w-full border border-line px-4 py-2.5 outline-none focus:border-brand';
+	const inputCls = 'w-full border border-line px-3 py-2 outline-none focus:border-brand';
 </script>
 
 <svelte:head>
@@ -38,115 +26,139 @@
 </svelte:head>
 
 <div class="space-y-6">
-	<div class="flex flex-wrap items-end justify-between gap-4">
-		<div>
-			<p class="mono text-brand">{$t.admin.title}</p>
-			<h1 class="text-3xl font-extrabold tracking-tight">{$t.admin.tabs.categories}</h1>
-		</div>
-
-		<label class="flex w-full max-w-xs items-center gap-2 border border-line bg-white px-4 py-2 focus-within:border-brand">
-			<Search size={16} class="text-slate-400" />
-			<input
-				bind:value={q}
-				placeholder={$t.admin.searchPlaceholder}
-				class="w-full bg-transparent text-sm outline-none"
-			/>
-		</label>
+	<div>
+		<p class="mono text-brand">{$t.admin.title}</p>
+		<h1 class="text-3xl font-extrabold tracking-tight">{$t.admin.tabs.categories}</h1>
 	</div>
+
+	{#if errors.form}
+		<p role="alert" class="border-l-4 border-red-600 bg-red-50 px-4 py-3 text-sm text-red-700">{errors.form}</p>
+	{/if}
 
 	<section class="border border-line bg-white">
 		<form
-			on:submit|preventDefault={() => {
-				const n = newCat.trim();
-				if (n && !cats.includes(n)) commitCats([...cats, n]);
-				newCat = '';
-			}}
-			class="flex gap-3 border-b border-line p-5"
+			method="POST"
+			action="?/create"
+			use:enhance={() =>
+				async ({ result, update }) => {
+					await update();
+					if (result.type === 'success') showToast($t.admin.f.saved);
+				}}
+			class="grid gap-3 border-b border-line p-5 sm:grid-cols-[1fr_1fr_1fr_auto]"
 		>
-			<input
-				bind:value={newCat}
-				placeholder={$t.admin.newCategoryName}
-				class="{inputCls} max-w-xs"
-			/>
+			<label>
+				<span class="text-xs font-semibold text-slate-soft">{$t.admin.f.catKey}</span>
+				<input name="name" required placeholder={$t.admin.newCategoryName} class={inputCls} />
+			</label>
+			<label>
+				<span class="text-xs font-semibold text-slate-soft">{$t.admin.f.labelId}</span>
+				<input name="label_id" class={inputCls} />
+			</label>
+			<label>
+				<span class="text-xs font-semibold text-slate-soft">{$t.admin.f.labelEn}</span>
+				<input name="label_en" class={inputCls} />
+			</label>
 			<button
 				type="submit"
-				class="inline-flex items-center gap-2 bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-emerald-deep"
+				class="inline-flex items-center justify-center gap-2 self-end bg-brand px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-deep"
 			>
 				<Plus size={16} />{$t.admin.addCategoryBtn}
 			</button>
+			{#if errors.name}<p class="text-xs text-red-600 sm:col-span-4">{errors.name}</p>{/if}
 		</form>
 
-		<table class="w-full text-left text-sm">
-			<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
-				<tr>
-					<th class={th}>{$t.admin.table.category}</th>
-					<th class={th}>{$t.admin.stats.places}</th>
-					<th class={th} />
-				</tr>
-			</thead>
-			<tbody class="divide-y divide-line">
-				{#each filteredCats as c}
+		<div class="overflow-x-auto">
+			<table class="w-full min-w-[640px] text-left text-sm">
+				<thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-soft">
 					<tr>
-						<td class="px-5 py-3 font-bold">
-							{#if renaming?.[0] === c}
-								<input
-									bind:value={renaming[1]}
-									class="{inputCls} max-w-xs py-1.5"
-								/>
-							{:else}
-								{c}
-							{/if}
-						</td>
-						<td class="px-5 py-3">
-							{places.filter((p) => p.category === c).length}
-						</td>
-						<td class="px-5 py-3">
-							<div class="flex justify-end gap-1">
-								{#if renaming?.[0] === c}
-									<button
-										type="button"
-										on:click={() => {
-											if (!renaming) return;
-											const n = renaming[1].trim();
-											if (n && (n === c || !cats.includes(n))) {
-												commitCats(cats.map((x) => (x === c ? n : x)));
-												commitPlaces(
-													places.map((p) => (p.category === c ? { ...p, category: n } : p))
-												);
-											}
-											renaming = null;
-										}}
-										class="px-3 py-1.5 text-sm font-bold text-emerald-deep hover:bg-brand-soft"
-									>
-										{$t.admin.table.save}
-									</button>
-								{:else}
-									<button
-										type="button"
-										aria-label="Rename"
-										on:click={() => (renaming = [c, c])}
-										class="p-2 text-slate-soft hover:bg-ocean-soft hover:text-ocean"
-									>
-										<Pencil size={16} />
-									</button>
-								{/if}
-								<button
-									type="button"
-									aria-label="Delete"
-									on:click={() =>
-										places.some((p) => p.category === c)
-											? alert('Reassign or delete the places in this category first.')
-											: commitCats(cats.filter((x) => x !== c))}
-									class="p-2 text-slate-soft hover:bg-red-50 hover:text-red-600"
-								>
-									<Trash2 size={16} />
-								</button>
-							</div>
-						</td>
+						<th class={th}>{$t.admin.f.catKey}</th>
+						<th class={th}>{$t.admin.f.labelId}</th>
+						<th class={th}>{$t.admin.f.labelEn}</th>
+						<th class={th}>{$t.admin.stats.places}</th>
+						<th class={th} />
 					</tr>
-				{/each}
-			</tbody>
-		</table>
+				</thead>
+				<tbody class="divide-y divide-line">
+					{#each data.categories as c (c.id)}
+						<tr>
+							<td class="px-5 py-3 font-bold">{c.name}</td>
+							{#if editingId === c.id}
+								<td class="px-5 py-3" colspan="3">
+									<form
+										method="POST"
+										action="?/update"
+										use:enhance={() =>
+											async ({ result, update }) => {
+												await update();
+												if (result.type === 'success') {
+													editingId = null;
+													showToast($t.admin.f.saved);
+												}
+											}}
+										class="flex flex-wrap gap-2"
+									>
+										<input type="hidden" name="id" value={c.id} />
+										<input name="label_id" value={c.label_id} aria-label={$t.admin.f.labelId} class="{inputCls} max-w-[12rem]" />
+										<input name="label_en" value={c.label_en} aria-label={$t.admin.f.labelEn} class="{inputCls} max-w-[12rem]" />
+										<button class="px-3 py-1.5 text-sm font-bold text-emerald-deep hover:bg-brand-soft">{$t.admin.table.save}</button>
+										<button type="button" on:click={() => (editingId = null)} class="px-3 py-1.5 text-sm">{$t.admin.f.cancel}</button>
+										{#if errors.label}<span class="w-full text-xs text-red-600">{errors.label}</span>{/if}
+									</form>
+								</td>
+							{:else}
+								<td class="px-5 py-3">{c.label_id}</td>
+								<td class="px-5 py-3">{c.label_en}</td>
+								<td class="px-5 py-3">{c.placeCount}</td>
+							{/if}
+							<td class="px-5 py-3">
+								<div class="flex justify-end gap-1">
+									{#if editingId !== c.id}
+										<button
+											type="button"
+											aria-label="{$t.admin.f.edit} {c.name}"
+											on:click={() => (editingId = c.id)}
+											class="p-2 text-slate-soft hover:bg-ocean-soft hover:text-ocean"
+										>
+											<Pencil size={16} />
+										</button>
+									{/if}
+									<form
+										method="POST"
+										action="?/delete"
+										use:enhance={({ cancel }) => {
+											if (c.placeCount > 0) {
+												alert($t.admin.f.catInUse.replace('{n}', String(c.placeCount)));
+												return cancel();
+											}
+											if (!confirm($t.admin.f.deleteConfirm.replace('{name}', c.name))) return cancel();
+											return async ({ result, update }) => {
+												await update();
+												if (result.type === 'success') showToast($t.admin.f.deleted);
+											};
+										}}
+									>
+										<input type="hidden" name="id" value={c.id} />
+										<button
+											type="submit"
+											aria-label="{$t.admin.f.delete} {c.name}"
+											class="p-2 text-slate-soft hover:bg-red-50 hover:text-red-600"
+										>
+											<Trash2 size={16} />
+										</button>
+									</form>
+								</div>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p class="border-t border-line p-4 text-xs text-slate-soft">{$t.admin.f.catKeyHint}</p>
 	</section>
 </div>
 
+{#if toast}
+	<div role="status" aria-live="polite" class="fixed bottom-5 right-5 z-[60] bg-forest px-5 py-3 text-sm font-semibold text-white shadow-lg">
+		{toast}
+	</div>
+{/if}

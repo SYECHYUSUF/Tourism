@@ -25,7 +25,9 @@ export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 
 	return {
 		supabase,
-		user: data.user
+		user: data.user,
+		wishlistIds: data.wishlistIds,
+		locale: data.locale
 	};
 };
 

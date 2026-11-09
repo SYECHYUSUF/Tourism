@@ -12,6 +12,7 @@ declare global {
 			supabase: TypedSupabaseClient;
 			safeGetSession(): Promise<{ session: Session | null; user: User | null }>;
 			user: AppUser | null;
+			locale: 'id' | 'en';
 		}
 		interface PageData {
 			user: AppUser | null;

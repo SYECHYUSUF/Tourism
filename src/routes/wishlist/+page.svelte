@@ -1,8 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { getWishlist } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { t } from '$lib/i18n';
@@ -11,22 +9,13 @@
 
 	export let data: PageData;
 
-	$: allPlaces = data.places || [];
-	let savedIds: string[] = [];
 	let prefs: Prefs;
-
-	$: userEmail = $page.data.user?.email || null;
-	$: if (userEmail) {
-		savedIds = getWishlist(userEmail);
-	} else {
-		savedIds = [];
-	}
 
 	onMount(() => {
 		prefs = loadPrefs();
 	});
 
-	$: list = allPlaces.filter((p) => savedIds.includes(p.id));
+	$: list = (data.places || []) as Place[];
 	$: origin = prefs ? originCoords(prefs) : ([-8.6913, 115.1682] as [number, number]);
 </script>
 
@@ -41,7 +30,7 @@
 	{#if list.length === 0}
 		<div class="mt-10 border border-dashed border-line p-16 text-center text-slate-soft">
 			{$t.wishlist.empty}
-			<a href="/results" class="font-bold text-ocean underline">{$t.wishlist.exploreLink}</a>
+			<a href="/find" class="font-bold text-ocean underline">{$t.wishlist.exploreLink}</a>
 		</div>
 	{:else}
 		<div class="mt-10 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">

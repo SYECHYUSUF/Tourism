@@ -1,25 +1,25 @@
 import type { PageServerLoad } from './$types';
 import { listPlaces } from '$lib/server/repo/places';
 import { listCategories } from '$lib/server/repo/categories';
+import { getSavedPrefs } from '$lib/server/repo/preferences';
 
 export const load: PageServerLoad = async ({ locals, setHeaders }) => {
 	const { supabase, user } = locals;
 
 	if (!user) {
-		setHeaders({
-			'cache-control': 'public, max-age=60'
-		});
+		setHeaders({ 'cache-control': 'public, max-age=60' });
 	}
 
-	const [places, categories] = await Promise.all([
+	const [places, categories, savedPrefs] = await Promise.all([
 		listPlaces(supabase),
-		listCategories(supabase)
+		listCategories(supabase),
+		user ? getSavedPrefs(supabase, user.id) : Promise.resolve(null)
 	]);
 
 	return {
 		places,
 		categories: categories.map((c) => c.name),
-		categoryRows: categories
+		categoryRows: categories,
+		savedPrefs
 	};
 };
-

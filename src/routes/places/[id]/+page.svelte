@@ -143,6 +143,13 @@
 
 <svelte:head>
 	<title>{place.name} — Jelajah</title>
+	<meta name="description" content={place.blurb.slice(0, 160)} />
+	<meta property="og:type" content="place" />
+	<meta property="og:title" content="{place.name} — Jelajah" />
+	<meta property="og:description" content={place.blurb.slice(0, 200)} />
+	<meta property="og:image" content={place.image} />
+	<meta property="og:url" content={$page.url.href} />
+	<meta name="twitter:card" content="summary_large_image" />
 </svelte:head>
 
 <main class="mx-auto max-w-[1400px] px-5 py-8 lg:px-10">
@@ -189,7 +196,6 @@
 				<h1 class="text-5xl font-extrabold tracking-tight">{place.name}</h1>
 				<WishlistButton
 					placeId={place.id}
-					userEmail={currentUser?.email}
 					label
 					className="shrink-0 border border-line bg-white px-4 py-2 text-sm hover:border-red-300"
 				/>

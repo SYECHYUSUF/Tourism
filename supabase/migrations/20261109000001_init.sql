@@ -4,6 +4,9 @@
 -- Run in    : Supabase SQL Editor (or via `supabase db push`)
 -- =============================================================================
 
+-- Fungsi SQL di bawah dibuat sebelum tabelnya; tunda validasi isi fungsi.
+set check_function_bodies = off;
+
 -- ---------------------------------------------------------------------------
 -- 0. Extensions
 -- ---------------------------------------------------------------------------

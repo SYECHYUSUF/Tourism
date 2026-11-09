@@ -1,9 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
-import type { Handle } from '@sveltejs/kit';
+import { error, redirect, type Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
 import type { Database, Profile } from '$lib/database.types';
 
-export const handle: Handle = async ({ event, resolve }) => {
+const supabaseHandle: Handle = async ({ event, resolve }) => {
 	event.locals.supabase = createServerClient<Database>(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
@@ -29,9 +30,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 		const {
 			data: { user },
-			error
+			error: getUserError
 		} = await event.locals.supabase.auth.getUser();
-		if (error || !user) {
+		if (getUserError || !user) {
 			return { session: null, user: null };
 		}
 
@@ -49,7 +50,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 			.maybeSingle();
 
 		// Cast to Pick<Profile, 'name' | 'role'> due to @supabase/ssr v0.5 generic signature
-		// passing 3 type params while @supabase/supabase-js v2.118 expects 5 type params.
 		const profile = data as Pick<Profile, 'name' | 'role'> | null;
 
 		event.locals.user = {
@@ -68,3 +68,29 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	});
 };
+
+const authGuard: Handle = async ({ event, resolve }) => {
+	const { pathname } = event.url;
+
+	// Protected routes that strictly require authentication
+	const protectedPrefixes = ['/home', '/wishlist', '/admin', '/reset-password'];
+	const isProtected = protectedPrefixes.some(
+		(prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+	);
+
+	if (isProtected && !event.locals.user) {
+		const fullPath = `${pathname}${event.url.search}`;
+		throw redirect(303, `/login?redirectTo=${encodeURIComponent(fullPath)}`);
+	}
+
+	// Admin route and all its subroutes strictly require 'admin' role
+	if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+		if (event.locals.user?.role !== 'admin') {
+			throw error(403, 'Forbidden: Akses ditolak. Area ini khusus untuk administrator.');
+		}
+	}
+
+	return resolve(event);
+};
+
+export const handle: Handle = sequence(supabaseHandle, authGuard);

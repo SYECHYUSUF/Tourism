@@ -290,6 +290,16 @@ export const translations = {
 			},
 			moderateHeading: 'Moderasi Ulasan Pengunjung',
 			moderateSub: 'Sembunyikan ulasan yang melanggar ketentuan. Ulasan tersembunyi tidak akan terlihat di halaman publik.'
+		},
+		error: {
+			badge: 'Kendala Akses',
+			title403: 'Akses Ditolak',
+			desc403: 'Anda tidak memiliki izin untuk mengakses halaman ini. Halaman ini khusus untuk administrator.',
+			title404: 'Halaman Tidak Ditemukan',
+			desc404: 'Halaman yang Anda cari tidak ditemukan atau telah dipindahkan.',
+			title500: 'Terjadi Kesalahan Server',
+			desc500: 'Maaf, terjadi kendala internal pada server. Silakan coba beberapa saat lagi.',
+			backHome: 'Kembali ke Beranda'
 		}
 	},
 	en: {
@@ -562,6 +572,16 @@ export const translations = {
 			},
 			moderateHeading: 'Moderate reviews',
 			moderateSub: 'Hide reviews that break the rules. Hidden reviews disappear from place pages.'
+		},
+		error: {
+			badge: 'Access Issue',
+			title403: 'Access Denied',
+			desc403: 'You do not have permission to access this page. This area is restricted to administrators.',
+			title404: 'Page Not Found',
+			desc404: 'The page you are looking for does not exist or has been moved.',
+			title500: 'Internal Server Error',
+			desc500: 'Sorry, something went wrong on our end. Please try again later.',
+			backHome: 'Back to Home'
 		}
 	}
 };

@@ -15,10 +15,12 @@
 		LocateFixed
 	} from 'lucide-svelte';
 	import { loadPrefs, savePrefs } from '$lib/prefs';
-	import { getCategories } from '$lib/data';
 	import { ORIGINS } from '$lib/scoring';
 	import { t } from '$lib/i18n';
+	import type { PageData } from './$types';
 	import type { Prefs } from '$lib/types';
+
+	export let data: PageData;
 
 	const icons: Record<string, any> = {
 		Culinary: Utensils,
@@ -38,7 +40,9 @@
 		priority: 'balanced',
 		origin: 'Seminyak'
 	};
-	let categoriesList: string[] = ['Culinary', 'Cafe', 'Nature', 'Culture', 'Beach', 'Resort'];
+	$: categoriesList = data.categories?.length > 0
+		? data.categories
+		: ['Culinary', 'Cafe', 'Nature', 'Culture', 'Beach', 'Resort'];
 	let geoErr = '';
 
 	$: steps = [$t.find.stepCategory, $t.find.stepBudget, $t.find.stepDistance];
@@ -52,7 +56,6 @@
 
 	onMount(() => {
 		p = loadPrefs();
-		categoriesList = getCategories();
 	});
 
 	function toggle(c: string) {

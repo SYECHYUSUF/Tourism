@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Star, Eye, EyeOff, Trash2, Search } from 'lucide-svelte';
-	import { getReviews, saveReviews, getPlaces } from '$lib/data';
+	import { getReviews, saveReviews } from '$lib/data';
 	import { t } from '$lib/i18n';
 	import type { Review, Place } from '$lib/types';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	let q = '';
 	let reviews: Review[] = [];
-	let places: Place[] = [];
+	$: places = data.places || [];
 
 	onMount(() => {
 		reviews = getReviews();
-		places = getPlaces();
 	});
 
 	function commitReviews(v: Review[]) {

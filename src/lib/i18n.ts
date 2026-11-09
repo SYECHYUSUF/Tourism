@@ -29,7 +29,8 @@ export const translations = {
 			from: 'dari',
 			any: 'Semua Kategori',
 			loading: 'Memuat...',
-			deleteConfirm: 'Apakah Anda yakin ingin menghapus?'
+			deleteConfirm: 'Apakah Anda yakin ingin menghapus?',
+			noPlacesAvailable: 'Belum ada data tempat yang tersedia di basis data.'
 		},
 		nav: {
 			home: 'Beranda',
@@ -183,7 +184,11 @@ export const translations = {
 			avgPrice: 'Estimasi Pengeluaran',
 			hours: 'Jam Operasional',
 			address: 'Alamat Lengkap',
-			directions: 'Petunjuk Arah (Peta)'
+			directions: 'Petunjuk Arah (Peta)',
+			similarPlaces: 'Tempat Serupa',
+			reviewSuccess: 'Ulasan Anda berhasil dikirim!',
+			reviewFailed: 'Gagal mengirim ulasan. Silakan coba lagi.',
+			ratingRequired: 'Silakan pilih rating bintang.'
 		},
 		login: {
 			welcomeBack: 'Selamat Datang Kembali',
@@ -311,7 +316,8 @@ export const translations = {
 			from: 'from',
 			any: 'Any Category',
 			loading: 'Loading...',
-			deleteConfirm: 'Are you sure you want to delete this?'
+			deleteConfirm: 'Are you sure you want to delete this?',
+			noPlacesAvailable: 'No places available in the database yet.'
 		},
 		nav: {
 			home: 'Home',
@@ -465,7 +471,11 @@ export const translations = {
 			avgPrice: 'Average price',
 			hours: 'Operating hours',
 			address: 'Address',
-			directions: 'Get directions'
+			directions: 'Get directions',
+			similarPlaces: 'Similar Places',
+			reviewSuccess: 'Your review has been submitted successfully!',
+			reviewFailed: 'Failed to submit review. Please try again.',
+			ratingRequired: 'Please select a star rating.'
 		},
 		login: {
 			welcomeBack: 'Welcome back',

@@ -3,21 +3,21 @@
 	import { goto } from '$app/navigation';
 	import { ArrowRight, ArrowDown } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { getPlaces, getCategories } from '$lib/data';
 	import { loadPrefs, savePrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { userStore } from '$lib/userStore';
 	import { t } from '$lib/i18n';
+	import type { PageData } from './$types';
 	import type { Place, Prefs } from '$lib/types';
 
 	const hero =
 		'https://images.unsplash.com/photo-1558005530-a7958896ec60?w=2400&fit=crop&auto=format&q=80';
 
-	export let data: any = null;
+	export let data: PageData;
 
 	let prefs: Prefs;
-	let places: Place[] = [];
-	let categories: string[] = [];
+	$: places = data.places || [];
+	$: categories = data.categories || [];
 
 	let cat = 'Culinary';
 	let budget = 350000;
@@ -28,8 +28,6 @@
 	onMount(async () => {
 		userStore.init(data?.user);
 		prefs = loadPrefs();
-		places = getPlaces();
-		categories = getCategories();
 		budget = prefs?.max ?? 350000;
 	});
 
@@ -163,13 +161,19 @@
 			</div>
 			<a href="/results" class="mono hover:text-brand">{$t.home.viewAll}</a>
 		</div>
-		<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-			{#each topMatches as { p, s, d }, i (p.id)}
-				<div class={i % 2 ? 'lg:mt-12' : ''}>
-					<PlaceCard place={p} score={s} distance={d} />
-				</div>
-			{/each}
-		</div>
+		{#if places.length === 0}
+			<div class="mt-10 border border-dashed border-line bg-white p-12 text-center text-slate-soft">
+				<p>{$t.common.noPlacesAvailable}</p>
+			</div>
+		{:else}
+			<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+				{#each topMatches as { p, s, d }, i (p.id)}
+					<div class={i % 2 ? 'lg:mt-12' : ''}>
+						<PlaceCard place={p} score={s} distance={d} />
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
 
 	<!-- Category visual cards -->

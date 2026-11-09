@@ -2,13 +2,16 @@
 	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { getPlaces, getWishlist } from '$lib/data';
+	import { getWishlist } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { t } from '$lib/i18n';
+	import type { PageData } from './$types';
 	import type { Place, Prefs } from '$lib/types';
 
-	let allPlaces: Place[] = [];
+	export let data: PageData;
+
+	$: allPlaces = data.places || [];
 	let savedIds: string[] = [];
 	let prefs: Prefs;
 
@@ -21,7 +24,6 @@
 
 	onMount(() => {
 		prefs = loadPrefs();
-		allPlaces = getPlaces();
 	});
 
 	$: list = allPlaces.filter((p) => savedIds.includes(p.id));

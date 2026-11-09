@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getPlaces, getReviews } from '$lib/data';
+	import { getReviews } from '$lib/data';
 	import { t } from '$lib/i18n';
 	import type { Place, Review } from '$lib/types';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	interface Acct {
 		name: string;
@@ -16,11 +19,10 @@
 		{ name: 'Rani Putri', email: 'user@jelajah.id', role: 'user', locked: true }
 	];
 
-	let places: Place[] = [];
+	$: places = data.places || [];
 	let reviews: Review[] = [];
 
 	onMount(() => {
-		places = getPlaces();
 		reviews = getReviews();
 	});
 

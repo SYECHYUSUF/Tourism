@@ -3,11 +3,13 @@
 	import { SlidersHorizontal, Pencil, Search, LayoutGrid, Map as MapIcon } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
 	import PlacesMap from '$components/PlacesMap.svelte';
-	import { getPlaces, getCategories } from '$lib/data';
 	import { loadPrefs } from '$lib/prefs';
 	import { matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { t, locale } from '$lib/i18n';
+	import type { PageData } from './$types';
 	import type { Place, Prefs } from '$lib/types';
+
+	export let data: PageData;
 
 	let prefs: Prefs = {
 		categories: ['Culinary', 'Beach'],
@@ -18,8 +20,8 @@
 		origin: 'Seminyak'
 	};
 
-	let allPlaces: Place[] = [];
-	let categoriesList: string[] = [];
+	$: allPlaces = data.places || [];
+	$: categoriesList = data.categories || [];
 
 	let q = '';
 	let sort = 'match';
@@ -32,8 +34,6 @@
 
 	onMount(() => {
 		prefs = loadPrefs();
-		allPlaces = getPlaces();
-		categoriesList = getCategories();
 		maxDist = Math.max(60, prefs.radius * 2);
 		maxPrice = Math.max(2500000, prefs.max * 2);
 	});
@@ -345,7 +345,7 @@
 				{/each}
 				{#if list.length === 0}
 					<p class="col-span-full border border-dashed border-line p-12 text-center text-slate-soft">
-						{$t.results.emptyState}
+						{allPlaces.length === 0 ? $t.common.noPlacesAvailable : $t.results.emptyState}
 					</p>
 				{/if}
 			</div>

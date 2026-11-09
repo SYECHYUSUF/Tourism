@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Plus, Pencil, Trash2, X, Search } from 'lucide-svelte';
-	import { getPlaces, savePlaces, getCategories } from '$lib/data';
 	import { priceRange } from '$lib/scoring';
 	import { t, locale } from '$lib/i18n';
 	import type { Place } from '$lib/types';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	let q = '';
 	let places: Place[] = [];
@@ -12,13 +14,12 @@
 	let editing: Place | null = null;
 
 	onMount(() => {
-		places = getPlaces();
-		cats = getCategories();
+		places = [...(data.places || [])];
+		cats = [...(data.categories || [])];
 	});
 
 	function commitPlaces(v: Place[]) {
 		places = v;
-		savePlaces(v);
 	}
 
 	function addPlace() {

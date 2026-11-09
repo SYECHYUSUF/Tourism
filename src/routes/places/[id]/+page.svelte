@@ -20,21 +20,24 @@
 	import Stars from '$components/Stars.svelte';
 	import MapComponent from '$components/MapComponent.svelte';
 	import WishlistButton from '$components/WishlistButton.svelte';
-	import { getReviews, saveReviews } from '$lib/data';
+	import PlaceCard from '$components/PlaceCard.svelte';
+	import { enhance } from '$app/forms';
 	import { loadPrefs } from '$lib/prefs';
 	import { priceRange, matchScore, distanceKm, originCoords } from '$lib/scoring';
 	import { t, locale } from '$lib/i18n';
-	import type { PageData } from './$types';
+	import type { PageData, ActionData } from './$types';
 	import type { Review, Prefs } from '$lib/types';
 
 	export let data: PageData;
+	export let form: ActionData;
 
 	$: place = data.place;
 	$: all = data.all;
+	$: reviews = data.reviews || [];
 
 	let active = 0;
-	let reviews: Review[] = [];
-	let form = { r: 5, t: '', photo: '' };
+	let reviewForm = { r: 5, t: '', photo: '' };
+	let submitting = false;
 	let prefs: Prefs;
 	let origin: [number, number] = [-8.6913, 115.1682]; // default Seminyak
 	$: currentUser = $page.data.user;
@@ -43,7 +46,6 @@
 	onMount(() => {
 		prefs = loadPrefs();
 		origin = originCoords(prefs);
-		reviews = getReviews();
 	});
 
 	$: gallery =
@@ -65,7 +67,7 @@
 			c.width = img.width * s;
 			c.height = img.height * s;
 			c.getContext('2d')?.drawImage(img, 0, 0, c.width, c.height);
-			form.photo = c.toDataURL('image/jpeg', 0.7);
+			reviewForm.photo = c.toDataURL('image/jpeg', 0.7);
 			URL.revokeObjectURL(url);
 		};
 		img.src = url;
@@ -87,26 +89,6 @@
 				copied = false;
 			}, 2500);
 		}
-	}
-
-	function submitReview() {
-		if (!currentUser || !form.t.trim()) return;
-		const next: Review[] = [
-			{
-				id: crypto.randomUUID(),
-				placeId: place.id,
-				reviewerName: currentUser.name,
-				rating: form.r,
-				reviewText: form.t.trim(),
-				photoUrl: form.photo || undefined,
-				hidden: false,
-				createdAt: new Date().toISOString().slice(0, 10)
-			},
-			...reviews
-		];
-		saveReviews(next);
-		reviews = next;
-		form = { r: 5, t: '', photo: '' };
 	}
 </script>
 
@@ -232,22 +214,46 @@
 				<h2 class="text-2xl font-extrabold">{$t.detail.reviews}</h2>
 
 				{#if currentUser}
+					{#if form?.reviewSuccess}
+						<div class="mt-4 border border-emerald-500 bg-emerald-50 p-4 text-sm font-semibold text-emerald-800">
+							{form.message || $t.detail.reviewSuccess}
+						</div>
+					{:else if form?.reviewError}
+						<div class="mt-4 border border-red-500 bg-red-50 p-4 text-sm font-semibold text-red-800">
+							{form.message || $t.detail.reviewFailed}
+						</div>
+					{/if}
+
 					<form
-						on:submit|preventDefault={submitReview}
+						method="POST"
+						action="?/review"
+						use:enhance={() => {
+							submitting = true;
+							return async ({ update, result }) => {
+								await update();
+								submitting = false;
+								if (result.type === 'success') {
+									reviewForm = { r: 5, t: '', photo: '' };
+								}
+							};
+						}}
 						class="mt-4 space-y-4 border border-line bg-white p-5"
 					>
+						<input type="hidden" name="rating" value={reviewForm.r} />
+						<input type="hidden" name="photo" value={reviewForm.photo} />
+
 						<div class="flex items-center justify-between">
 							<span class="text-sm font-semibold">{$t.detail.reviewingAs} {currentUser.name}</span>
 							<div class="flex gap-1" role="radiogroup" aria-label="Rating">
 								{#each [1, 2, 3, 4, 5] as i}
 									<button
 										type="button"
-										on:click={() => (form.r = i)}
+										on:click={() => (reviewForm.r = i)}
 										aria-label="{i} stars"
 									>
 										<Star
 											size={24}
-											class={i <= form.r
+											class={i <= reviewForm.r
 												? 'fill-amber-400 text-amber-400'
 												: 'text-slate-300'}
 										/>
@@ -258,7 +264,8 @@
 
 						<textarea
 							required
-							bind:value={form.t}
+							name="reviewText"
+							bind:value={reviewForm.t}
 							rows="3"
 							placeholder={$t.detail.shareExperience}
 							class="w-full border border-line px-4 py-3 outline-none focus:border-brand"
@@ -277,17 +284,17 @@
 										on:change={(e) => pickPhoto(e.currentTarget.files)}
 									/>
 								</label>
-								{#if form.photo}
+								{#if reviewForm.photo}
 									<span class="relative">
 										<img
-											src={form.photo}
+											src={reviewForm.photo}
 											alt="Preview"
 											class="h-10 w-10 object-cover"
 										/>
 										<button
 											type="button"
 											aria-label="Remove photo"
-											on:click={() => (form.photo = '')}
+											on:click={() => (reviewForm.photo = '')}
 											class="absolute -right-2 -top-2 grid h-4 w-4 place-items-center bg-ink text-white"
 										>
 											<X size={10} />
@@ -297,9 +304,10 @@
 							</div>
 							<button
 								type="submit"
-								class="bg-brand px-6 py-2.5 font-bold text-white transition hover:bg-emerald-deep"
+								disabled={submitting}
+								class="bg-brand px-6 py-2.5 font-bold text-white transition hover:bg-emerald-deep disabled:opacity-50"
 							>
-								{$t.detail.postReview}
+								{submitting ? $t.common.loading : $t.detail.postReview}
 							</button>
 						</div>
 					</form>
@@ -454,4 +462,20 @@
 			{/if}
 		</aside>
 	</div>
+
+	<!-- Similar Places Section -->
+	{#if data.similarPlaces && data.similarPlaces.length > 0}
+		<section class="mt-16 border-t border-line pt-10">
+			<h2 class="text-2xl font-extrabold tracking-tight">{$t.detail.similarPlaces}</h2>
+			<div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+				{#each data.similarPlaces as sp (sp.id)}
+					<PlaceCard
+						place={sp}
+						distance={distanceKm(sp, origin)}
+						score={prefs ? matchScore(sp, prefs) : undefined}
+					/>
+				{/each}
+			</div>
+		</section>
+	{/if}
 </main>

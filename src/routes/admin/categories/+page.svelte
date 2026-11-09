@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Plus, Pencil, Trash2, Search } from 'lucide-svelte';
-	import { getCategories, saveCategories, getPlaces, savePlaces } from '$lib/data';
 	import { t } from '$lib/i18n';
 	import type { Place } from '$lib/types';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	let q = '';
 	let cats: string[] = [];
@@ -12,18 +14,16 @@
 	let renaming: [string, string] | null = null;
 
 	onMount(() => {
-		cats = getCategories();
-		places = getPlaces();
+		cats = [...(data.categories || [])];
+		places = [...(data.places || [])];
 	});
 
 	function commitCats(v: string[]) {
 		cats = v;
-		saveCategories(v);
 	}
 
 	function commitPlaces(v: Place[]) {
 		places = v;
-		savePlaces(v);
 	}
 
 	$: term = q.toLowerCase();

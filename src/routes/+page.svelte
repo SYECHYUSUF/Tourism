@@ -1,16 +1,19 @@
 <script lang="ts">
 	import { ArrowRight, Quote } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { SEED_PLACES } from '$lib/data';
 	import { matchScore, distanceKm, ORIGINS } from '$lib/scoring';
 	import { DEFAULT_PREFS } from '$lib/prefs';
 	import { t } from '$lib/i18n';
+	import type { PageData } from './$types';
+
+	export let data: PageData;
 
 	const hero =
 		'https://images.unsplash.com/photo-1650761827030-38288141cbe6?w=2400&fit=crop&auto=format&q=80';
 
 	const origin = ORIGINS[DEFAULT_PREFS.origin];
-	const featured = SEED_PLACES.slice(0, 4).map((p) => ({
+	$: places = data.places || [];
+	$: featured = places.map((p) => ({
 		p,
 		score: matchScore(p, DEFAULT_PREFS),
 		distance: distanceKm(p, origin)
@@ -125,13 +128,19 @@
 			</div>
 			<a href="/results" class="mono hidden hover:text-brand sm:block">{$t.landing.exploreAll}</a>
 		</div>
-		<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-			{#each featured as { p, score, distance }, i}
-				<div class={i % 2 ? 'lg:mt-12' : ''}>
-					<PlaceCard place={p} {score} {distance} />
-				</div>
-			{/each}
-		</div>
+		{#if places.length === 0}
+			<div class="mt-10 border border-dashed border-line bg-white p-12 text-center text-slate-soft">
+				<p>{$t.common.noPlacesAvailable}</p>
+			</div>
+		{:else}
+			<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+				{#each featured as { p, score, distance }, i}
+					<div class={i % 2 ? 'lg:mt-12' : ''}>
+						<PlaceCard place={p} {score} {distance} />
+					</div>
+				{/each}
+			</div>
+		{/if}
 	</section>
 
 	<!-- Testimonials -->

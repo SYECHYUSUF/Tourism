@@ -12,7 +12,8 @@
 		Waves,
 		Hotel,
 		Tag,
-		LocateFixed
+		LocateFixed,
+		Search
 	} from 'lucide-svelte';
 	import { DEFAULT_PREFS, hasStoredPrefs, loadPrefs } from '$lib/prefs';
 	import { submitSearch } from '$lib/search';
@@ -305,7 +306,8 @@
 				<button
 					type="button"
 					on:click={() => (step = step + 1)}
-					class="inline-flex items-center gap-2 rounded-sm bg-ink px-7 py-3 font-bold text-white transition hover:bg-brand"
+					disabled={step === 0 && p.categories.length === 0}
+					class="inline-flex items-center gap-2 rounded-sm bg-ink px-7 py-3 font-bold text-white transition hover:bg-brand disabled:opacity-40 disabled:cursor-not-allowed"
 				>
 					{$t.find.btnContinue} <ArrowRight size={16} />
 				</button>
@@ -313,9 +315,10 @@
 				<button
 					type="button"
 					on:click={submit}
-					class="inline-flex items-center gap-2 rounded-sm bg-brand px-7 py-3 font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-deep"
+					disabled={p.categories.length === 0}
+					class="inline-flex items-center gap-2 rounded-sm bg-brand px-7 py-3 font-bold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-deep disabled:opacity-40 disabled:cursor-not-allowed"
 				>
-					{$t.find.btnSubmit} <ArrowRight size={16} />
+					<Search size={16} /> {$t.find.btnSubmit}
 				</button>
 			{/if}
 		</div>
@@ -344,5 +347,15 @@
 				<dd class="mt-1 font-semibold capitalize">{$t.find.priorities[p.priority]?.t || p.priority}</dd>
 			</div>
 		</dl>
+
+		{#if p.categories.length > 0}
+			<button
+				type="button"
+				on:click={submit}
+				class="mt-8 flex w-full items-center justify-center gap-2 rounded-sm bg-brand px-4 py-3 font-bold text-white shadow-md transition hover:bg-emerald-deep"
+			>
+				<Search size={16} /> {$t.find.btnSubmit}
+			</button>
+		{/if}
 	</aside>
 </main>

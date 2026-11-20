@@ -46,7 +46,8 @@ export const translations = {
 			signIn: 'Masuk',
 			signOut: 'Keluar',
 			getStarted: 'Mulai Sekarang',
-			admin: 'Admin'
+			admin: 'Admin',
+			signedInAs: 'Masuk sebagai'
 		},
 		footer: {
 			tagline: 'Rekomendasi tempat wisata & kuliner terbaik, dinilai berdasarkan apa yang benar-benar Anda inginkan.',
@@ -99,6 +100,10 @@ export const translations = {
 			],
 			popularBadge: 'Pilihan Populer',
 			popularTitle: 'Favorit Minggu Ini',
+			mostVisitedBadge: 'Destinasi Terpopuler',
+			mostVisitedTitle: 'Tempat Paling Banyak Dikunjungi',
+			topReviewsBadge: 'Kepuasan Tertinggi',
+			topReviewsTitle: 'Tempat dengan Ulasan Terbaik',
 			exploreAll: 'Lihat Semua Tempat →',
 			testimonials: [
 				[
@@ -265,6 +270,10 @@ export const translations = {
 			recentSearches: 'Pencarian Terakhir',
 			pickedForYou: 'Pilihan Spesial',
 			topMatches: 'Rekomendasi Teratas untuk Anda',
+			mostVisitedBadge: 'Destinasi Terpopuler',
+			mostVisitedTitle: 'Tempat Paling Banyak Dikunjungi',
+			topReviewsBadge: 'Kepuasan Tertinggi',
+			topReviewsTitle: 'Tempat dengan Ulasan Terbaik',
 			viewAll: 'Lihat Semua →',
 			browse: 'Jelajahi'
 		},
@@ -416,7 +425,8 @@ export const translations = {
 			signIn: 'Sign in',
 			signOut: 'Sign out',
 			getStarted: 'Get started',
-			admin: 'Admin'
+			admin: 'Admin',
+			signedInAs: 'Signed in as'
 		},
 		footer: {
 			tagline: 'Travel and culinary picks, scored on what you actually care about.',
@@ -469,6 +479,10 @@ export const translations = {
 			],
 			popularBadge: 'A taste of what is inside',
 			popularTitle: 'Popular this week',
+			mostVisitedBadge: 'Most Popular',
+			mostVisitedTitle: 'Most Visited Places',
+			topReviewsBadge: 'Highest Rated',
+			topReviewsTitle: 'Places with Best Reviews',
 			exploreAll: 'Explore all places →',
 			testimonials: [
 				[
@@ -635,6 +649,10 @@ export const translations = {
 			recentSearches: 'Recent searches',
 			pickedForYou: 'Picked for you',
 			topMatches: 'Your top matches',
+			mostVisitedBadge: 'Most Popular',
+			mostVisitedTitle: 'Most Visited Places',
+			topReviewsBadge: 'Highest Rated',
+			topReviewsTitle: 'Places with Best Reviews',
 			viewAll: 'View all →',
 			browse: 'Browse'
 		},

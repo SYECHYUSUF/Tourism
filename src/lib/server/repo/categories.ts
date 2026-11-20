@@ -1,6 +1,6 @@
 import { error as kitError } from '@sveltejs/kit';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database, CategoryRow } from '$lib/database.types';
+import type { CategoryRow } from '$lib/database.types';
 
 export async function listCategories(supabase: SupabaseClient<any, any, any>): Promise<CategoryRow[]> {
 	const { data, error } = await (supabase as any)

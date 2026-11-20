@@ -10,10 +10,15 @@ export const load: PageServerLoad = async ({ locals, setHeaders }) => {
 		});
 	}
 
-	const places = await listPlaces(supabase, { limit: 4 });
+	const [mostVisited, topRated] = await Promise.all([
+		listPlaces(supabase, { orderBy: 'review_count', orderAsc: false, limit: 5 }),
+		listPlaces(supabase, { orderBy: 'rating', orderAsc: false, limit: 5 })
+	]);
 
 	return {
-		places
+		mostVisited,
+		topRated,
+		places: mostVisited
 	};
 };
 

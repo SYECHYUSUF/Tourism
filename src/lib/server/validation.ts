@@ -60,7 +60,3 @@ export function inBali(lat: number, lng: number): boolean {
 		lng <= BALI_BOUNDS.lngMax
 	);
 }
-
-export function clampInt(n: number, min: number, max: number): number {
-	return Math.min(max, Math.max(min, Math.round(n)));
-}

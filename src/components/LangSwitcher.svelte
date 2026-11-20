@@ -3,43 +3,21 @@
 	import { Languages } from 'lucide-svelte';
 
 	export let clear = false; // When navbar is in transparent hero state
+
+	function toggleLocale() {
+		setLocale($locale === 'id' ? 'en' : 'id');
+	}
 </script>
 
-<div
-	class="inline-flex items-center rounded-sm border p-0.5 text-xs font-bold transition {clear
-		? 'border-white/30 bg-black/20 text-white'
-		: 'border-line bg-white text-ink shadow-sm'}"
-	role="group"
-	aria-label="Language Switcher"
+<button
+	type="button"
+	on:click={toggleLocale}
+	aria-label={$locale === 'id' ? 'Ganti bahasa ke English' : 'Switch language to Bahasa Indonesia'}
+	title={$locale === 'id' ? 'Ganti bahasa ke English (EN)' : 'Switch language to Bahasa Indonesia (ID)'}
+	class="inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-1.5 text-xs font-bold transition select-none {clear
+		? 'border-white/40 bg-white/10 text-white hover:bg-white/20'
+		: 'border-line bg-white text-ink shadow-sm hover:border-slate-400'}"
 >
-	<Languages size={13} class="ml-1.5 mr-1 {clear ? 'text-emerald-300' : 'text-brand'}" />
-	<button
-		type="button"
-		on:click={() => setLocale('id')}
-		class="px-2 py-1 transition rounded-sm {$locale === 'id'
-			? clear
-				? 'bg-white text-ink font-extrabold shadow'
-				: 'bg-brand text-white font-extrabold shadow-sm'
-			: clear
-				? 'text-white/80 hover:text-white'
-				: 'text-slate-soft hover:text-brand'}"
-		aria-pressed={$locale === 'id'}
-	>
-		ID
-	</button>
-	<span class="opacity-30">|</span>
-	<button
-		type="button"
-		on:click={() => setLocale('en')}
-		class="px-2 py-1 transition rounded-sm {$locale === 'en'
-			? clear
-				? 'bg-white text-ink font-extrabold shadow'
-				: 'bg-brand text-white font-extrabold shadow-sm'
-			: clear
-				? 'text-white/80 hover:text-white'
-				: 'text-slate-soft hover:text-brand'}"
-		aria-pressed={$locale === 'en'}
-	>
-		EN
-	</button>
-</div>
+	<Languages size={14} class={clear ? 'text-emerald-300' : 'text-brand'} />
+	<span class="tracking-wider uppercase">{$locale === 'id' ? 'ID' : 'EN'}</span>
+</button>

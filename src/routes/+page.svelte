@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ArrowRight, Quote } from 'lucide-svelte';
 	import PlaceCard from '$components/PlaceCard.svelte';
-	import { matchScore, distanceKm, ORIGINS } from '$lib/scoring';
+	import { distanceKm, ORIGINS } from '$lib/scoring';
 	import { DEFAULT_PREFS } from '$lib/prefs';
 	import { t } from '$lib/i18n';
 	import type { PageData } from './$types';
@@ -12,10 +12,14 @@
 		'https://images.unsplash.com/photo-1650761827030-38288141cbe6?w=2400&fit=crop&auto=format&q=80';
 
 	const origin = ORIGINS[DEFAULT_PREFS.origin];
-	$: places = data.places || [];
-	$: featured = places.map((p) => ({
+	$: mostVisited = data.mostVisited || data.places || [];
+	$: topRated = data.topRated || [];
+	$: featuredVisited = mostVisited.slice(0, 5).map((p) => ({
 		p,
-		score: matchScore(p, DEFAULT_PREFS),
+		distance: distanceKm(p, origin)
+	}));
+	$: featuredRated = topRated.slice(0, 5).map((p) => ({
+		p,
 		distance: distanceKm(p, origin)
 	}));
 </script>
@@ -122,24 +126,48 @@
 		</div>
 	</section>
 
-	<!-- Popular this week -->
+	<!-- Most Visited Places (5 items) -->
 	<section class="mx-auto max-w-[1400px] px-5 pt-24 lg:px-10">
 		<div class="flex items-end justify-between border-b border-ink pb-4">
 			<div>
-				<p class="mono text-brand">{$t.landing.popularBadge}</p>
-				<h2 class="mt-2 text-4xl font-extrabold sm:text-5xl">{$t.landing.popularTitle}</h2>
+				<p class="mono text-brand">{$t.landing.mostVisitedBadge}</p>
+				<h2 class="mt-2 text-3xl font-extrabold sm:text-5xl">{$t.landing.mostVisitedTitle}</h2>
 			</div>
 			<a href="/results" class="mono hidden hover:text-brand sm:block">{$t.landing.exploreAll}</a>
 		</div>
-		{#if places.length === 0}
+		{#if featuredVisited.length === 0}
 			<div class="mt-10 border border-dashed border-line bg-white p-12 text-center text-slate-soft">
 				<p>{$t.common.noPlacesAvailable}</p>
 			</div>
 		{:else}
-			<div class="mt-10 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
-				{#each featured as { p, score, distance }, i}
-					<div class={i % 2 ? 'lg:mt-12' : ''}>
-						<PlaceCard place={p} {score} {distance} />
+			<div class="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+				{#each featuredVisited as { p, distance }}
+					<div>
+						<PlaceCard place={p} {distance} />
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</section>
+
+	<!-- Best Reviewed Places (5 items) -->
+	<section class="mx-auto max-w-[1400px] px-5 pt-24 lg:px-10">
+		<div class="flex items-end justify-between border-b border-ink pb-4">
+			<div>
+				<p class="mono text-brand">{$t.landing.topReviewsBadge}</p>
+				<h2 class="mt-2 text-3xl font-extrabold sm:text-5xl">{$t.landing.topReviewsTitle}</h2>
+			</div>
+			<a href="/results" class="mono hidden hover:text-brand sm:block">{$t.landing.exploreAll}</a>
+		</div>
+		{#if featuredRated.length === 0}
+			<div class="mt-10 border border-dashed border-line bg-white p-12 text-center text-slate-soft">
+				<p>{$t.common.noPlacesAvailable}</p>
+			</div>
+		{:else}
+			<div class="mt-10 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+				{#each featuredRated as { p, distance }}
+					<div>
+						<PlaceCard place={p} {distance} />
 					</div>
 				{/each}
 			</div>

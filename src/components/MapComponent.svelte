@@ -9,16 +9,6 @@
 	let mapEl: HTMLDivElement;
 	let map: import('leaflet').Map;
 
-	const pin = (bg: string) => {
-		const L = (window as unknown as { L: typeof import('leaflet') }).L;
-		return L.divIcon({
-			className: '',
-			iconSize: [18, 18],
-			iconAnchor: [9, 9],
-			html: `<div style="width:18px;height:18px;border-radius:50%;background:${bg};border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`
-		});
-	};
-
 	onMount(async () => {
 		const L = (await import('leaflet')).default;
 		await import('leaflet/dist/leaflet.css');

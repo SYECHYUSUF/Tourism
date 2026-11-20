@@ -15,7 +15,6 @@
 		Share2,
 		Check,
 		Sparkles,
-		ShieldCheck,
 		Trash2
 	} from 'lucide-svelte';
 	import Stars from '$components/Stars.svelte';
@@ -33,7 +32,6 @@
 	export let form: ActionData;
 
 	$: place = data.place;
-	$: all = data.all;
 	$: reviews = data.reviews || [];
 	$: userReview = data.userReview || null;
 

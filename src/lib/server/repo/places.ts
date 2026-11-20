@@ -1,6 +1,5 @@
 import { error as kitError } from '@sveltejs/kit';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '$lib/database.types';
 import type { Place } from '$lib/types';
 
 /**
@@ -39,6 +38,8 @@ export interface ListPlacesOptions {
 	category?: string;
 	excludeId?: string;
 	limit?: number;
+	orderBy?: 'rating' | 'review_count' | 'name';
+	orderAsc?: boolean;
 }
 
 export async function listPlaces(
@@ -55,6 +56,10 @@ export async function listPlaces(
 
 	if (options?.excludeId) {
 		query = query.neq('id', options.excludeId);
+	}
+
+	if (options?.orderBy) {
+		query = query.order(options.orderBy, { ascending: options.orderAsc ?? false });
 	}
 
 	if (options?.limit) {

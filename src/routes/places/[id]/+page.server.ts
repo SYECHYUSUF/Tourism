@@ -1,7 +1,9 @@
 import { error, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getPlaceById, listPlaces } from '$lib/server/repo/places';
+import { removeByUrls } from '$lib/server/storage';
 import type { Review } from '$lib/types';
+import { getDummyReviews } from '$lib/dummyReviews';
 
 const PAGE_SIZE = 10;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -19,19 +21,6 @@ function mapReviewRow(row: any): Review {
 		hidden: Boolean(row.hidden),
 		createdAt: row.created_at ? String(row.created_at).slice(0, 10) : new Date().toISOString().slice(0, 10)
 	};
-}
-
-async function deletePhotoFromStorage(supabase: any, photoUrl: string | null | undefined) {
-	if (!photoUrl) return;
-	try {
-		const parts = photoUrl.split('/review-photos/');
-		if (parts.length > 1) {
-			const filePath = decodeURIComponent(parts[1]);
-			await supabase.storage.from('review-photos').remove([filePath]);
-		}
-	} catch (err) {
-		console.error('Failed to remove photo from storage:', err);
-	}
 }
 
 export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) => {
@@ -76,9 +65,15 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 		console.error(`Supabase error fetching reviews for place "${params.id}":`, reviewsError);
 	}
 
-	const reviews: Review[] = ((dbReviewsData as any[]) ?? []).map(mapReviewRow);
-	const totalReviews = count ?? 0;
+	const dbReviews: Review[] = ((dbReviewsData as any[]) ?? []).map(mapReviewRow);
+	const dummies = getDummyReviews(params.id);
+	const existingIds = new Set(dbReviews.map((r) => r.id));
+	const addedDummies = dummies.filter((d) => !existingIds.has(d.id));
+	const combinedReviews = [...dbReviews, ...addedDummies];
+
+	const totalReviews = Math.max(count ?? 0, combinedReviews.length);
 	const totalPages = Math.max(1, Math.ceil(totalReviews / PAGE_SIZE));
+	const reviews = combinedReviews.slice(from, to + 1);
 
 	// 5. Fetch logged-in user's own review if present (so they can view/edit it)
 	let userReview: Review | null = null;
@@ -174,14 +169,14 @@ export const actions: Actions = {
 
 		// If user explicitly requested to remove the existing photo
 		if (removePhoto && existingData?.photo_url) {
-			await deletePhotoFromStorage(supabase, existingData.photo_url);
+			await removeByUrls(supabase, 'review-photos', [existingData.photo_url]);
 			photoUrl = null;
 		}
 
 		// If new photo file uploaded
 		if (hasPhotoFile) {
 			if (existingData?.photo_url) {
-				await deletePhotoFromStorage(supabase, existingData.photo_url);
+				await removeByUrls(supabase, 'review-photos', [existingData.photo_url]);
 			}
 
 			const ext = photo.type === 'image/png' ? 'png' : photo.type === 'image/webp' ? 'webp' : 'jpg';
@@ -274,7 +269,7 @@ export const actions: Actions = {
 
 		// Delete photo from storage bucket if present
 		if (existingData.photo_url) {
-			await deletePhotoFromStorage(supabase, existingData.photo_url);
+			await removeByUrls(supabase, 'review-photos', [existingData.photo_url]);
 		}
 
 		// Delete review from DB (RLS reviews_delete_own_or_admin enforces user_id = auth.uid())

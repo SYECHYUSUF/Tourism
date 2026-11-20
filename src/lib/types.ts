@@ -9,13 +9,6 @@ export interface AppUser {
 	role: Role;
 }
 
-export interface UserProfile extends AppUser {}
-
-export interface Category {
-	id: number;
-	category_name: string;
-}
-
 export interface Place {
 	id: string;
 	category_id?: number;
